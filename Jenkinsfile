@@ -5,17 +5,17 @@ pipeline {
         string(name: 'RELEASE_TYPE', description: 'Release type (e.g., prod, staging, dev)', defaultValue: 'dev')
     }
     environment {
-        IMAGE_NAME = 'godfrey22152/devsecops'
+        IMAGE_NAME = 'godfrey22152/SecureDevLifecycle'
         TRIVY_TIMEOUT = '15m'
     }
     stages {
         stage('Git Checkout') {
             steps {
-                git branch: 'main', 
+                git branch: 'container-security', 
                     changelog: false, 
                     credentialsId: 'git-cred', 
                     poll: false, 
-                    url: 'https://github.com/Godfrey22152/DevSecOps.git'
+                    url: 'https://github.com/Godfrey22152/SecureDevLifecycle.git'
             }
         }
         
