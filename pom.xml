@@ -1,0 +1,283 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>TrainBook</groupId>
+    <artifactId>TrainBook</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <packaging>war</packaging>
+
+    <!-- Define reusable properties -->
+    <properties>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <aspectj.version>1.9.21</aspectj.version>
+        <allure.version>2.25.0</allure.version>
+        <maven.spotbugs.version>4.9.3.0</maven.spotbugs.version>
+	<maven.checkstyle.version>3.6.0</maven.checkstyle.version>
+
+	<!-- Jacoco Properties -->
+	<jacoco.version>0.8.13</jacoco.version>
+	<sonar.java.coveragePlugin>jacoco</sonar.java.coveragePlugin>
+	<sonar.dynamicAnalysis>reuseReports</sonar.dynamicAnalysis>
+	<sonar.jacoco.reportPath>${project.basedir}/../target/jacoco.exec</sonar.jacoco.reportPath>
+	<sonar.coverage.jacoco.xmlReportPaths>${project.build.directory}/jacoco-report/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
+	<sonar.language>java</sonar.language>
+    </properties>
+
+    <build>
+        <sourceDirectory>src/main/java</sourceDirectory>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+            </resource>
+        </resources>
+        <plugins>
+            <!-- Compiler Plugin -->
+            <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.8.1</version>
+                <configuration>
+                    <source>${maven.compiler.source}</source>
+                    <target>${maven.compiler.target}</target>
+                </configuration>
+            </plugin>
+
+            <!-- WAR Plugin -->
+            <plugin>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>3.2.3</version>
+                <configuration>
+                    <warSourceDirectory>WebContent</warSourceDirectory>
+                </configuration>
+            </plugin>
+
+            <!-- Surefire Plugin for Tests -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.2.3</version>
+                <configuration>
+		    <argLine>
+                    	${argLine} -javaagent:"${settings.localRepository}/org/aspectj/aspectjweaver/${aspectj.version}/aspectjweaver-${aspectj.version}.jar"
+		    </argLine>
+                </configuration>
+            </plugin>
+
+            <!-- OWASP dependency Check Plugin -->     
+            <plugin>
+              <groupId>org.owasp</groupId>
+              <artifactId>dependency-check-maven</artifactId>
+              <version>12.1.0</version>
+              <executions>
+                  <execution>
+                      <goals>
+                          <goal>check</goal>
+                      </goals>
+                  </execution>
+              </executions>
+            </plugin> 
+
+	    <!-- Plugin for Spotbugs Analysis and SpotBugs Report Generation -->
+	    <plugin>
+      		<groupId>com.github.spotbugs</groupId>
+      		<artifactId>spotbugs-maven-plugin</artifactId>
+      		<version>${maven.spotbugs.version}</version> 
+      		<configuration>
+        	    <effort>Max</effort>
+        	    <threshold>Low</threshold>
+        	    <!-- Generate XML report for Jenkins Warnings-NG -->
+		    <spotbugsXmlOutputDirectory>${project.build.directory}/spotbugs</spotbugsXmlOutputDirectory> <!-- Custom directory -->
+        	    <failOnError>false</failOnError> <!-- Don't fail the build on errors -->
+      		</configuration>
+		<executions>
+    		    <execution>
+      			<goals>
+        		    <goal>check</goal>
+     		        </goals>
+    		    </execution>
+  		</executions>
+    	    </plugin>
+
+	    <!-- Checkstyle plugin configuration -->
+	    <plugin>
+  	      <groupId>org.apache.maven.plugins</groupId>
+  	      <artifactId>maven-checkstyle-plugin</artifactId>
+	      <version>${maven.checkstyle.version}</version>
+  	      <configuration>
+    		<configLocation>google_checks.xml</configLocation>
+		<outputDirectory>${project.build.directory}/checkstyle-report</outputDirectory>
+        	<outputFile>${project.build.directory}/checkstyle-report/checkstyle-result.xml</outputFile>
+		<cacheFile>${project.build.directory}/checkstyle-report/checkstyle-cachefile</cacheFile>
+    		<includeTestSourceDirectory>true</includeTestSourceDirectory> <!-- Include test sources -->
+    		<failOnViolation>false</failOnViolation>
+    		<!-- File inclusion filters -->
+    		<includes>**/*.java</includes> <!-- Only analyze Java files -->
+              </configuration>
+  	      <executions>
+    		<execution>
+      		  <id>checkstyle</id>
+      		  <phase>verify</phase>
+      		  <goals>
+        	    <goal>check</goal>
+      		  </goals>
+    		</execution>
+  	      </executions>
+	    </plugin>
+
+	    <!-- Jacoco Plugin -->     
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>${jacoco.version}</version>
+                <executions>
+                    <execution>
+		        <id>prepare-agent</id>		      
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+		    <execution>
+		        <id>report</id>
+			<phase>verify</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+			<configuration>
+                	    <outputDirectory>${project.build.directory}/jacoco-report</outputDirectory>
+            		</configuration>
+                    </execution>
+		</executions>
+            </plugin> 
+		
+            <!-- Dependency Plugin -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>3.1.2</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>com.github.jsimone</groupId>
+                                    <artifactId>webapp-runner</artifactId>
+                                    <version>8.0.30.2</version>
+                                    <destFileName>webapp-runner.jar</destFileName>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+    <!-- Dependency Management -->
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>io.qameta.allure</groupId>
+                <artifactId>allure-bom</artifactId>
+                <version>${allure.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <!-- Dependencies -->
+    <dependencies>
+        <!-- MongoDB Driver -->
+        <dependency>
+            <groupId>org.mongodb</groupId>
+            <artifactId>mongodb-driver-sync</artifactId>
+            <version>4.11.2</version>
+        </dependency>
+
+        <!-- Servlet API -->
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
+            <version>3.1.0</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- JUnit 5 Testing -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <version>5.9.1</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <version>5.9.1</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Mockito for Testing -->
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-inline</artifactId>
+            <version>4.5.1</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-junit-jupiter</artifactId>
+            <version>4.5.1</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- AssertJ for Fluent Assertions -->
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <version>3.22.0</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- AspectJ Weaver -->
+        <dependency>
+            <groupId>org.aspectj</groupId>
+            <artifactId>aspectjweaver</artifactId>
+            <version>${aspectj.version}</version>
+        </dependency>
+
+        <!-- Allure for Reporting -->
+        <dependency>
+            <groupId>io.qameta.allure</groupId>
+            <artifactId>allure-junit5</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+	<!-- Apache Commons IO (Fixed Vulnerability CVE-2024-47554) -->
+	<dependency>
+    	    <groupId>commons-io</groupId>
+    	    <artifactId>commons-io</artifactId>
+    	    <version>2.14.0</version>
+	</dependency>
+    </dependencies>
+
+    <!-- Deployment to Nexus -->
+    <distributionManagement>
+        <repository>
+            <id>maven-releases</id>
+            <name>maven-releases</name>
+            <url>http://192.168.169.58:8081/repository/maven-releases/</url>
+        </repository>
+        <snapshotRepository>
+            <id>maven-snapshots</id>
+            <name>maven-snapshots</name>
+            <url>http://192.168.169.58:8081/repository/maven-snapshots/</url>
+        </snapshotRepository>
+    </distributionManagement>
+
+</project>

@@ -1,0 +1,13 @@
+target/
+.git/
+*.log
+*.md
+*.iml
+.dockerignore
+Dockerfile
+README*
+*.sh
+.m2/
+Jenkinsfile
+Manifest_Files
+
