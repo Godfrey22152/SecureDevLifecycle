@@ -1,34 +1,47 @@
 pipeline {
     agent any
-    options {
-        buildDiscarder logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '15', daysToKeepStr: '', numToKeepStr: '2')
-    }
-    
+
     stages {
-        stage('Run Child Pipelines in Parallel') {
+        stage('Run All Branch Jobs in Parallel') {
             parallel {
-                stage('Quality Assurance & Testing') {
+                stage('Trigger Quality Assurance Pipeline') {
                     steps {
-                        build job: 'DevSecOps/Quality-Assurance-and-Automated-Testing', wait: true, propagate: true
+                        script {
+                            build job: 'SecureDevLifecycle/quality-assurance', wait: true
+                        }
                     }
                 }
-                stage('Container Security Scans') {
+                stage('Trigger Container Security Pipeline') {
                     steps {
-                        build job: 'DevSecOps/Container-Security-Scans', wait: true, propagate: true, parameters: [
-                            string(name: 'RELEASE_TYPE', value: 'dev')
-                        ]
+                        script {
+                            build job: 'SecureDevLifecycle/container-security', wait: true, parameters: [
+                                string(name: 'RELEASE_TYPE', value: 'dev')
+                            ]
+                        }
                     }
                 }
             }
         }
     }
-    
+
     post {
         success {
-            echo '✅ Both pipelines completed successfully!'
+            slackSend channel: '#devops-projects',
+                      color: 'good',
+                      message: """
+                        ✅ *Parent Pipeline Successful*
+                        *Job*: ${env.JOB_NAME} #${env.BUILD_NUMBER}
+                        *Build URL*: ${env.BUILD_URL}
+                      """
         }
         failure {
-            echo '❌ One or more pipelines failed!'
+            slackSend channel: '#devops-projects',
+                      color: 'danger',
+                      message: """
+                        ❌ *Parent Pipeline Failed*
+                        *Job*: ${env.JOB_NAME} #${env.BUILD_NUMBER}
+                        *Build URL*: ${env.BUILD_URL}
+                      """
         }
     }
 }
