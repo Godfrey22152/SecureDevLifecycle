@@ -13,9 +13,9 @@ pipeline {
     stages {
         stage('Checkout & Initialize') {
             steps {
-                git branch: 'main', 
+                git branch: 'quality-assurance', 
                      credentialsId: 'git-cred', 
-                     url: 'https://github.com/Godfrey22152/DevSecOps.git'
+                     url: 'https://github.com/Godfrey22152/SecureDevLifecycle.git'
                 sh 'mvn --version' // Verify environment
             }
         }
