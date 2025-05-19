@@ -1,5 +1,6 @@
 # Stage 1: Build the application with Maven
 FROM maven:3.9.7-eclipse-temurin-17 AS builder
+LABEL maintainer="Odo Godfrey <godfreyifeanyi50@gmail.com>"
 
 # Set the working directory inside the container
 WORKDIR /app
