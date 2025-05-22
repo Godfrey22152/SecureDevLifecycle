@@ -5,7 +5,7 @@ pipeline {
         string(name: 'RELEASE_TYPE', description: 'Release type (e.g., prod, staging, dev)', defaultValue: 'dev')
     }
     environment {
-        IMAGE_NAME = 'godfrey22152/securedevlifecycle'
+        IMAGE_NAME = 'Godfrey22152/SecureDevLifecycle'
         TRIVY_TIMEOUT = '15m'
         REGISTRY = 'ghcr.io'
         GITHUB_CREDENTIALS_ID = 'git-cred'
