@@ -7,6 +7,12 @@ pipeline {
     environment {
         IMAGE_NAME = 'godfrey22152/securedevlifecycle'
         TRIVY_TIMEOUT = '15m'
+        REGISTRY = 'ghcr.io'
+        GITHUB_CREDENTIALS_ID=credentialsId('git-cred')
+        COSIGN_PASSWORD=credentialsId('cosign-password')
+        COSIGN_PRIVATE_KEY=credentialsId('cosign-private-key')
+        COSIGN_PUBLIC_KEY=credentialsId('cosign-public-key')
+        
     }
     stages {
         stage('Git Checkout') {
@@ -65,6 +71,18 @@ pipeline {
             }
         }
         
+        stage('Login to GitHub Container Registry (GHCR)') {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'git-cred', 
+                    passwordVariable: 'GITHUB_TOKEN', 
+                    usernameVariable: 'GITHUB_USER'
+                )]) {
+                    sh 'docker login ${env.REGISTRY} -u ${GITHUB_USER} -p ${GITHUB_TOKEN}'
+                }
+            }
+        }
+        
         stage('Image Security Scans') {
             parallel {
                 stage('Trivy Image Scan') {
@@ -118,9 +136,59 @@ pipeline {
             }
         }
         
-        stage('Finally Done') {
+        stage('Push Image to GitHub Container Registry (GHCR)') {
             steps {
-                echo 'Congratulations No CRITICAL VULNERABILITIES were found'
+                echo 'CONGRATULATIONS No CRITICAL VULNERABILITIES WERE FOUND, PROCEEDING TO PUSH IMAGE'
+                sh 'docker push ${env.IMAGE_NAME}:${env.TAG}'
+            }
+        }
+
+        stage('Sign Container Image with Cosign') {
+            steps {
+                script {
+                    echo "[Cosign] Version Check"
+                    sh "cosign version"
+                    withCredentials([string(credentialsId: 'cosign-private-key', variable: 'COSIGN_PRIVATE_KEY')]) {
+                        sh """
+                            set -e  # Exit immediately on error
+                            echo "[Cosign] Signing ${env.REGISTRY}/${env.IMAGE_NAME}:${env.TAG}"
+                    
+                            # Sign with recursive flag
+                            cosign sign \\
+                                --key "${COSIGN_PRIVATE_KEY}" \\
+                                --yes \\
+                                --recursive \\
+                                "${env.REGISTRY}/${env.IMAGE_NAME}:${env.TAG}"
+                    
+                            # Capture digest after successful signing
+                            DIGEST=\$(cosign triangulate "${env.REGISTRY}/${env.IMAGE_NAME}:${env.TAG}")
+                            echo "✅ Signed digest: \${DIGEST}"
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('Verify Cosign Signature') {
+            steps {
+                script {
+                    echo "[Cosign] Version Check"
+                    sh "cosign version"
+            
+                    withCredentials([string(credentialsId: 'cosign-public-key', variable: 'COSIGN_PUBLIC_KEY')]) {
+                        sh """
+                            set -e                  
+                            echo "[Cosign] Verifying ${env.REGISTRY}/${env.IMAGE_NAME}:${env.TAG}"
+                            cosign verify \\
+                                --key "${COSIGN_PUBLIC_KEY}" \\
+                                "${env.REGISTRY}/${env.IMAGE_NAME}:${env.TAG}"
+                                
+                            # Capture digest after successful Verification
+                            DIGEST=\$(cosign triangulate "${env.REGISTRY}/${env.IMAGE_NAME}:${env.TAG}")
+                            echo "✅ Verification succeeded: \${DIGEST}"
+                        """
+                    }
+                }
             }
         }
     }
