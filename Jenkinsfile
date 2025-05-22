@@ -28,7 +28,7 @@ pipeline {
             steps {
                 script {
                     echo "=== Dockerfile Quality Check ==="
-
+        
                     // Run linting with clean output
                     def lintStatus = sh(
                         script: '''
@@ -40,6 +40,7 @@ pipeline {
                         ''',
                         returnStatus: true
                     )
+                    
                     // Process results
                     def lintResults = readFile('hadolint-results.txt').trim()
                     
@@ -56,12 +57,12 @@ pipeline {
                         echo "🚨 Found ${issueCount} linting issue(s) needing attention"
                         
                         archiveArtifacts artifacts: 'hadolint-results.txt', allowEmptyArchive: false
-                        error("Dockerfile validation failed with ${issueCount} issues")                    
-                    
-                }
-            }
-        }
-        
+                        error("Dockerfile validation failed with ${issueCount} issues")
+                    }  
+                }  
+            }  
+        }  
+                   
         stage('Set Up Docker Build Variables') {
             steps {
                 script {
