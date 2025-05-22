@@ -27,10 +27,7 @@ pipeline {
         stage('Lint Dockerfile') {
             steps {
                 script {
-                    echo "=== Dockerfile Quality Check ==="
-                    echo "Using Hadolint version:"
-                    sh 'docker run --rm hadolint/hadolint --version'
-            
+                    echo "=== Dockerfile Quality Check ==="            
                     // Store lint results in file
                     sh 'docker run --rm -i hadolint/hadolint < Dockerfile > hadolint-results.txt 2>&1 || true'
                     
