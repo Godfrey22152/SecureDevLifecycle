@@ -179,7 +179,7 @@ pipeline {
         stage('Push Image to GitHub Container Registry (GHCR)') {
             steps {
                 echo 'CONGRATULATIONS No CRITICAL VULNERABILITIES WERE FOUND, PROCEEDING TO PUSH IMAGE'
-                sh 'docker push ${env.IMAGE_NAME}:${env.TAG}'
+                sh "docker push ${env.IMAGE_NAME}:${env.TAG}"
             }
         }
 
