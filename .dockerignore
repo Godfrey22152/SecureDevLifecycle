@@ -1,13 +1,34 @@
+# Build artifacts
 target/
-.git/
 *.log
-*.md
 *.iml
-.dockerignore
-Dockerfile
-README*
 *.sh
+
+# Source control
+.git/
+
+# Documentation
+*.md
+README*
+
+# Maven local repo
 .m2/
+
+# CI/CD config
 Jenkinsfile
 Manifest_Files
 
+# Environment/config/credentials
+.env
+.env.*
+*.env
+.aws/
+.kube/
+secrets/
+
+# IDE metadata
+.idea/
+.vscode/
+
+# Docker context files
+.dockerignore
