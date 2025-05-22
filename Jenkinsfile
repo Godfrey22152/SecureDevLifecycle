@@ -24,6 +24,33 @@ pipeline {
                     url: 'https://github.com/Godfrey22152/SecureDevLifecycle.git'
             }
         }
+
+        stage('Lint Dockerfile') {
+            steps {
+                script {
+                    echo "=== Dockerfile Quality Check ==="
+                    echo "Using Hadolint version:"
+                    sh 'docker run --rm hadolint/hadolint --version'
+            
+                    // Store lint results in file
+                    sh 'docker run --rm -i hadolint/hadolint < Dockerfile > hadolint-results.txt 2>&1 || true'
+                    
+                    // Parse and display results
+                    def lintResults = readFile('hadolint-results.txt').trim()
+                    
+                    if (lintResults.isEmpty()) {
+                        echo "✅ Dockerfile passed all lint checks"
+                    } else {
+                        echo "❌ Linting Issues Found:"
+                        echo lintResults
+                        error("Dockerfile validation failed with ${lintResults.count('\n')} issues")
+                    }
+                    
+                    // Archive results for later review
+                    archiveArtifacts artifacts: 'hadolint-results.txt', allowEmptyArchive: true
+                }
+            }
+        }
         
         stage('Set Up Docker Build Variables') {
             steps {
