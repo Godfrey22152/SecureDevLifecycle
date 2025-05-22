@@ -27,23 +27,37 @@ pipeline {
         stage('Lint Dockerfile') {
             steps {
                 script {
-                    echo "=== Dockerfile Quality Check ==="            
-                    // Store lint results in file
-                    sh 'docker run --rm -i hadolint/hadolint < Dockerfile > hadolint-results.txt 2>&1 || true'
-                    
-                    // Parse and display results
+                    echo "=== Dockerfile Quality Check ==="
+
+                    // Run linting with clean output
+                    def lintStatus = sh(
+                        script: '''
+                            set +x  # Disable command echoing
+                            docker run --rm -i hadolint/hadolint < Dockerfile \
+                                | tee hadolint-results.txt \
+                                | grep -E 'DL|SC' \
+                                || true
+                        ''',
+                        returnStatus: true
+                    )
+                    // Process results
                     def lintResults = readFile('hadolint-results.txt').trim()
                     
                     if (lintResults.isEmpty()) {
-                        echo "✅ Dockerfile passed all lint checks"
+                        echo "✅ 🎉 Dockerfile passed all quality checks!"
                     } else {
-                        echo "❌ Linting Issues Found:"
-                        echo lintResults
-                        error("Dockerfile validation failed with ${lintResults.count('\n')} issues")
-                    }
+                        echo "❌ 🔍 Found linting issues:"
+                        // Format findings with line numbers
+                        lintResults.eachLine { line, count ->
+                            echo "  ${count}. ${line.replaceAll(/\[[0-9;]+m/, '')}"  // Remove color codes
+                        }
+                        
+                        def issueCount = lintResults.count('\n') + 1
+                        echo "🚨 Found ${issueCount} linting issue(s) needing attention"
+                        
+                        archiveArtifacts artifacts: 'hadolint-results.txt', allowEmptyArchive: false
+                        error("Dockerfile validation failed with ${issueCount} issues")                    
                     
-                    // Archive results for later review
-                    archiveArtifacts artifacts: 'hadolint-results.txt', allowEmptyArchive: true
                 }
             }
         }
