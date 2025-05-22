@@ -28,6 +28,7 @@ COPY --from=builder /app/target/*.war /usr/local/tomcat/webapps/ROOT.war
 RUN groupadd -r tomcat && \
     useradd -r -g tomcat --no-log-init --shell /bin/false tomcat && \
     chown -R tomcat:tomcat /usr/local/tomcat
+    chmod -R go-w /usr/local/tomcat
 
 # Switch to non-root user
 USER tomcat
