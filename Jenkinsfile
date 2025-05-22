@@ -48,9 +48,11 @@ pipeline {
                         echo "✅ 🎉 Dockerfile passed all quality checks!"
                     } else {
                         echo "❌ 🔍 Found linting issues:"
-                        // Format findings with line numbers
-                        lintResults.eachLine { line, count ->
-                            echo "  ${count}. ${line.replaceAll(/\[[0-9;]+m/, '')}"  // Remove color codes
+                        // Format findings
+                        lintResults.split('\n').eachWithIndex { line, index ->
+                            // Fix 2: Better ANSI code removal regex
+                            def cleanLine = line.replaceAll(/\e\[[0-9;]*m/, '')
+                            echo "  ${index + 1}. ${cleanLine.trim()}"
                         }
                         
                         def issueCount = lintResults.count('\n') + 1
