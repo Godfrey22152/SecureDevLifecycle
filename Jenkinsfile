@@ -118,8 +118,7 @@ pipeline {
                     passwordVariable: 'GITHUB_TOKEN', 
                     usernameVariable: 'GITHUB_USER'
                 )]) {
-                    //sh "docker login ${env.REGISTRY} -u \$GITHUB_USER -p \$GITHUB_TOKEN"
-                    echo $GITHUB_TOKEN | docker login ${env.REGISTRY} -u $GITHUB_USER --password-stdin
+                    sh "docker login ${env.REGISTRY} -u \$GITHUB_USER -p \$GITHUB_TOKEN"
                 }
             }
         }
