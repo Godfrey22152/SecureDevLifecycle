@@ -252,8 +252,8 @@ pipeline {
                             IMAGE_WITH_DIGEST="${IMAGE_NAME}@${DIGEST}"
                             
                             # Use the absolute path for sed
-                            sed -i "s|^  image: .*|  image: ${IMAGE_WITH_DIGEST}|" trainbook-deployment.yaml
-
+                            sed -i "s|^[[:space:]]*image: .*|        image: ${IMAGE_WITH_DIGEST}|" trainbook-deployment.yaml
+                            
                             echo "Updated Trainbook Manifest Deployment File Content:"
                             cat trainbook-deployment.yaml
                             
