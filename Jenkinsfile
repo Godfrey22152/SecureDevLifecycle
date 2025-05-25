@@ -5,9 +5,8 @@ pipeline {
         string(name: 'RELEASE_TYPE', description: 'Release type (e.g., prod, staging, dev)', defaultValue: 'dev')
     }
     environment {
-        IMAGE_NAME = 'ghcr.io/godfrey22152/securedevlifecycle'
+        IMAGE_NAME = 'ghcr.io/godfrey22152/trainbook-app'
         TRIVY_TIMEOUT = '15m'
-        REGISTRY = 'ghcr.io'
         GITHUB_CREDENTIALS_ID = 'git-cred' 
     }
     
@@ -195,10 +194,10 @@ pipeline {
                     ]) {
                         sh '''
                             set -e  # Exit immediately on error
-                            echo "[Cosign] Signing ${REGISTRY}/${IMAGE_NAME}:${TAG}"
+                            echo "[Cosign] Signing ${IMAGE_NAME}:${TAG}"
 
                             # Capture image digest and Sign image with digest instead of image tag 
-                            DIGEST=$(cosign triangulate "${REGISTRY}/${IMAGE_NAME}:${TAG}")
+                            DIGEST=$(cosign triangulate "${IMAGE_NAME}:${TAG}")
                             echo "$COSIGN_PASSWORD" | cosign sign \
                                 --key "$COSIGN_KEY_FILE" \
                                 --yes \
@@ -221,9 +220,9 @@ pipeline {
                     withCredentials([file(credentialsId: 'cosign-public-key-file', variable: 'COSIGN_KEY_FILE')]) {
                         sh '''
                             set -e
-                            echo "[Cosign] Verifying ${REGISTRY}/${IMAGE_NAME}:${TAG}"
+                            echo "[Cosign] Verifying ${IMAGE_NAME}:${TAG}"
                             
-                            DIGEST=$(cosign triangulate "${REGISTRY}/${IMAGE_NAME}:${TAG}")
+                            DIGEST=$(cosign triangulate "${IMAGE_NAME}:${TAG}")
                             cosign verify \
                                 --key "$COSIGN_KEY_FILE" \
                                 "$DIGEST"
@@ -234,5 +233,52 @@ pipeline {
                 }
             }
         }
-    }
+
+        stage('Update Docker Image and Tag in the Deployment manifest file in Container-Security branch') {
+            steps {
+                script {
+                    withCredentials([gitUsernamePassword(credentialsId: 'git-cred', gitToolName: 'Default')]) {
+                        sh '''
+                            # Git Clone Repository
+                            git clone -b container-security --single-branch https://github.com/Godfrey22152/SecureDevLifecycle.git Manifest_Files 
+                            cd Manifest_Files
+                            git checkout container-security
+                            
+                            # List files to confirm the presence of trainbook-deployment.yaml file in the Manifest_Files folder.
+                            ls -l 
+
+                            # Get the absolute path for the current directory
+                            repo_dir=$(pwd)
+                            
+                            # Use the absolute path for sed
+                            sed -i "s|^  image: .*|  image: ${IMAGE_NAME}:${TAG}|" "${repo_dir}/trainbook-deployment.yaml"
+                        '''
+                        
+                        // Confirm the change
+                        sh '''
+                            echo "Updated YAML Manifest File Content:"
+                            cat Manifest_Files/trainbook-deployment.yaml
+
+                        '''
+                        
+                        // Configure Git for committing changes and pushing
+                        sh '''
+                            cd Manifest_Files   #Ensure you are inside the cloned repo. 
+                            git config user.email "godfreyifeanyi45@gmail.com"
+                            git config user.name "Godfrey22152"
+                        '''
+                        
+                        // Commit and push Updated YAML file back to the repository
+                        sh '''
+                            cd Manifest_Files
+                            ls
+                            git add trainbook-deployment.yaml
+                            git commit -m "Updated image tag to ${TAG} by Jenkins"
+                            git push origin container-security
+                        '''
+                    }
+                }
+            }
+        } 
+    } 
 }
