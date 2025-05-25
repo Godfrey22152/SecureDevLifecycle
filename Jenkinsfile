@@ -246,9 +246,13 @@ pipeline {
 
                             echo "Before update:"
                             cat trainbook-deployment.yaml
+
+                            # Get image digest
+                            DIGEST=$(crane digest "${IMAGE_NAME}:${TAG}")
+                            IMAGE_WITH_DIGEST="${IMAGE_NAME}@${DIGEST}"
                             
                             # Use the absolute path for sed
-                            sed -i "s|^  image: .*|  image: ${IMAGE_NAME}:${TAG}|" trainbook-deployment.yaml
+                            sed -i "s|^  image: .*|  image: ${IMAGE_WITH_DIGEST}|" trainbook-deployment.yaml
 
                             echo "Updated Trainbook Manifest Deployment File Content:"
                             cat trainbook-deployment.yaml
@@ -257,7 +261,7 @@ pipeline {
                             git config user.name "Godfrey22152"
                             
                             git add trainbook-deployment.yaml
-                            git commit -m "Updated image tag to ${TAG} by Jenkins" || echo "No changes to commit"
+                            git commit -m "Updated image to digest: ${IMAGE_WITH_DIGEST} by Jenkins" || echo "No changes to commit"
                             git push origin container-security
                         '''
                     }
