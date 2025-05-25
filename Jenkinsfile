@@ -8,11 +8,9 @@ pipeline {
         IMAGE_NAME = 'ghcr.io/godfrey22152/securedevlifecycle'
         TRIVY_TIMEOUT = '15m'
         REGISTRY = 'ghcr.io'
-        GITHUB_CREDENTIALS_ID = 'git-cred'
-        COSIGN_PASSWORD_ID = 'cosign-password'
-        COSIGN_PRIVATE_KEY_ID = 'cosign-private-key'
-        COSIGN_PUBLIC_KEY_ID = 'cosign-public-key' 
+        GITHUB_CREDENTIALS_ID = 'git-cred' 
     }
+    
     stages {
         stage('Git Checkout') {
             steps {
