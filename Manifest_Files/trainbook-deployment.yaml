@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: trainbook-app
-        image: godfrey22152/trainbook-app:v1 # Adjust the image tag for the blue version
+        image: godfrey22152/trainbook-app:v1 # Auto-update the image tag to the current tag version and environment
         ports:
         - containerPort: 8080
         env:
