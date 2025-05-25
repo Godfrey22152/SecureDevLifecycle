@@ -21,55 +21,73 @@ pipeline {
             }
         }
 
-        stage('Lint Dockerfile') {
-            steps {
-                script {
-                    echo "=== Dockerfile Quality Check ==="
-        
-                    // Run linting with clean output
-                    def lintStatus = sh(
-                        script: '''
-                            set +x  # Disable command echoing
-                            docker run --rm -i hadolint/hadolint < Dockerfile \
-                                | tee hadolint-results.txt \
-                                | grep -E 'DL|SC' \
-                                || true
-                        ''',
-                        returnStatus: true
-                    )
-                    
-                    // Process results
-                    def lintResults = readFile('hadolint-results.txt').trim()
-                    
-                    if (lintResults.isEmpty()) {
-                        echo "✅ 🎉 Dockerfile passed all quality checks!"
-                    } else {
-                        echo "❌ 🔍 Found linting issues:"
-                        // Format findings
-                        lintResults.split('\n').eachWithIndex { line, index ->
-                            // Fix 2: Better ANSI code removal regex
-                            def cleanLine = line.replaceAll(/\e\[[0-9;]*m/, '')
-                            echo "  ${index + 1}. ${cleanLine.trim()}"
-                        }
-                        
-                        def issueCount = lintResults.count('\n') + 1
-                        echo "🚨 Found ${issueCount} linting issue(s) needing attention"
-                        
-                        archiveArtifacts artifacts: 'hadolint-results.txt', allowEmptyArchive: false
-                        error("Dockerfile validation failed with ${issueCount} issues")
+        stage('Docker Setup') {
+            parallel {
+                stage('Lint Dockerfile') {
+                    steps {
+                        script {
+                            echo "=== Dockerfile Quality Check ==="
+                
+                            // Run linting with clean output
+                            def lintStatus = sh(
+                                script: '''
+                                    set +x  # Disable command echoing
+                                    docker run --rm -i hadolint/hadolint < Dockerfile \
+                                        | tee hadolint-results.txt \
+                                        | grep -E 'DL|SC' \
+                                        || true
+                                ''',
+                                returnStatus: true
+                            )
+                            
+                            // Process results
+                            def lintResults = readFile('hadolint-results.txt').trim()
+                            
+                            if (lintResults.isEmpty()) {
+                                echo "✅ 🎉 Dockerfile passed all quality checks!"
+                            } else {
+                                echo "❌ 🔍 Found linting issues:"
+                                // Format findings
+                                lintResults.split('\n').eachWithIndex { line, index ->
+                                    // Fix 2: Better ANSI code removal regex
+                                    def cleanLine = line.replaceAll(/\e\[[0-9;]*m/, '')
+                                    echo "  ${index + 1}. ${cleanLine.trim()}"
+                                }
+                                
+                                def issueCount = lintResults.count('\n') + 1
+                                echo "🚨 Found ${issueCount} linting issue(s) needing attention"
+                                
+                                archiveArtifacts artifacts: 'hadolint-results.txt', allowEmptyArchive: false
+                                error("Dockerfile validation failed with ${issueCount} issues")
+                            }  
+                        }  
                     }  
                 }  
-            }  
-        }  
-                   
-        stage('Set Up Docker Build Variables') {
-            steps {
-                script {
-                    // Generate timestamp
-                    def TIMESTAMP = sh(script: 'date "+%Y-%m-%d_%H-%M-%S"', returnStdout: true).trim()
-                    
-                    // Create tag using parameter and timestamp
-                    env.TAG = "${params.RELEASE_TYPE}-${TIMESTAMP}"
+                           
+                stage('Set Up Docker Build Variables') {
+                    steps {
+                        script {
+                            // Generate timestamp
+                            def TIMESTAMP = sh(script: 'date "+%Y-%m-%d_%H-%M-%S"', returnStdout: true).trim()
+                            
+                            // Create tag using parameter and timestamp
+                            env.TAG = "${params.RELEASE_TYPE}-${TIMESTAMP}"
+                        }
+                    }
+                }
+
+                stage('Login to GitHub Container Registry (GHCR)') {
+                    steps {
+                        withCredentials([usernamePassword(
+                            credentialsId: 'git-cred', 
+                            passwordVariable: 'GITHUB_TOKEN', 
+                            usernameVariable: 'GITHUB_USER'
+                        )]) {
+                            sh '''
+                                echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_USER" --password-stdin
+                            '''
+                        }
+                    }
                 }
             }
         }
@@ -104,20 +122,6 @@ pipeline {
                     def imageSizeMB = String.format('%.2f', imageSizeBytes.toFloat() / (1024 * 1024))
         
                     echo "Scanning image size: ${imageSizeMB} MB"
-                }
-            }
-        }
-        
-        stage('Login to GitHub Container Registry (GHCR)') {
-            steps {
-                withCredentials([usernamePassword(
-                    credentialsId: 'git-cred', 
-                    passwordVariable: 'GITHUB_TOKEN', 
-                    usernameVariable: 'GITHUB_USER'
-                )]) {
-                    sh '''
-                        echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_USER" --password-stdin
-                    '''
                 }
             }
         }
