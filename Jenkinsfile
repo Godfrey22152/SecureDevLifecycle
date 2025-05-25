@@ -117,7 +117,7 @@ pipeline {
                     usernameVariable: 'GITHUB_USER'
                 )]) {
                     sh '''
-                        echo "$GITHUB_TOKEN" | docker login ${env.REGISTRY} -u "$GITHUB_USER" --password-stdin
+                        echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_USER" --password-stdin
                     '''
                 }
             }
