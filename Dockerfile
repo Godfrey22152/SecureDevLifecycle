@@ -4,6 +4,7 @@ FROM maven:3.9.7-eclipse-temurin-17 AS builder
 LABEL maintainer="Odo Godfrey <godfreyifeanyi50@gmail.com>"
 LABEL org.opencontainers.image.authors="Odo Godfrey <godfreyifeanyi50@gmail.com>"
 LABEL org.opencontainers.image.description="Train-Booking App Tomcat deployment for Java web application"
+LABEL org.opencontainers.image.source https://github.com/Godfrey22152/SecureDevLifecycle
 
 WORKDIR /app
 
