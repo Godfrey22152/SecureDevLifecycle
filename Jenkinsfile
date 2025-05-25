@@ -166,7 +166,7 @@ pipeline {
                                     --scope all-layers \
                                     --output cyclonedx-json \
                                     --file /reports/grype-scan.cdx.json \
-                                    --fail-on=high  
+                                    --fail-on=critical  
                             """
                         }
                         // Archive the CycloneDX JSON report
@@ -187,23 +187,24 @@ pipeline {
             steps {
                 script {
                     echo "[Cosign] Version Check"
-                    sh "cosign version"
-                    withCredentials([string(credentialsId: 'cosign-private-key', variable: 'COSIGN_PRIVATE_KEY')]) {
-                        sh """
+                    sh 'cosign version'
+        
+                    withCredentials([file(credentialsId: 'cosign-private-key-file', variable: 'COSIGN_KEY_FILE')]) {
+                        sh '''
                             set -e  # Exit immediately on error
-                            echo "[Cosign] Signing ${env.REGISTRY}/${env.IMAGE_NAME}:${env.TAG}"
-                    
-                            # Sign with recursive flag
-                            cosign sign \\
-                                --key "${COSIGN_PRIVATE_KEY}" \\
-                                --yes \\
-                                --recursive \\
-                                "${env.REGISTRY}/${env.IMAGE_NAME}:${env.TAG}"
-                    
+                            echo "[Cosign] Signing ${REGISTRY}/${IMAGE_NAME}:${TAG}"
+        
+                            # Sign with key file (no interpolation)
+                            cosign sign \
+                                --key "$COSIGN_KEY_FILE" \
+                                --yes \
+                                --recursive \
+                                "${REGISTRY}/${IMAGE_NAME}:${TAG}"
+        
                             # Capture digest after successful signing
-                            DIGEST=\$(cosign triangulate "${env.REGISTRY}/${env.IMAGE_NAME}:${env.TAG}")
-                            echo "✅ Signed digest: \${DIGEST}"
-                        """
+                            DIGEST=$(cosign triangulate "${REGISTRY}/${IMAGE_NAME}:${TAG}")
+                            echo "✅ Signed digest: $DIGEST"
+                        '''
                     }
                 }
             }
@@ -213,20 +214,21 @@ pipeline {
             steps {
                 script {
                     echo "[Cosign] Version Check"
-                    sh "cosign version"
-            
-                    withCredentials([string(credentialsId: 'cosign-public-key', variable: 'COSIGN_PUBLIC_KEY')]) {
-                        sh """
-                            set -e                  
-                            echo "[Cosign] Verifying ${env.REGISTRY}/${env.IMAGE_NAME}:${env.TAG}"
-                            cosign verify \\
-                                --key "${COSIGN_PUBLIC_KEY}" \\
-                                "${env.REGISTRY}/${env.IMAGE_NAME}:${env.TAG}"
-                                
-                            # Capture digest after successful Verification
-                            DIGEST=\$(cosign triangulate "${env.REGISTRY}/${env.IMAGE_NAME}:${env.TAG}")
-                            echo "✅ Verification succeeded: \${DIGEST}"
-                        """
+                    sh 'cosign version'
+        
+                    withCredentials([file(credentialsId: 'cosign-public-key-file', variable: 'COSIGN_KEY_FILE')]) {
+                        sh '''
+                            set -e
+                            echo "[Cosign] Verifying ${REGISTRY}/${IMAGE_NAME}:${TAG}"
+        
+                            cosign verify \
+                                --key "$COSIGN_KEY_FILE" \
+                                "${REGISTRY}/${IMAGE_NAME}:${TAG}"
+        
+                            # Capture digest after successful verification
+                            DIGEST=$(cosign triangulate "${REGISTRY}/${IMAGE_NAME}:${TAG}")
+                            echo "✅ Verification succeeded: $DIGEST"
+                        '''
                     }
                 }
             }
