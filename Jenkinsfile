@@ -196,15 +196,15 @@ pipeline {
                             set -e  # Exit immediately on error
                             echo "[Cosign] Signing ${IMAGE_NAME}:${TAG}"
 
-                            # Capture image digest and Sign image with digest instead of image tag 
-                            DIGEST=$(cosign triangulate "${IMAGE_NAME}:${TAG}")
+                            # Sign image with digest instead of image tag 
+                            DIGEST=\$(crane digest "${IMAGE_NAME}:${TAG}")
                             echo "$COSIGN_PASSWORD" | cosign sign \
                                 --key "$COSIGN_KEY_FILE" \
                                 --yes \
                                 --recursive \
-                                "$DIGEST"
+                                "${IMAGE_NAME}@\$DIGEST"
         
-                            echo "✅ Signed image digest: $DIGEST"
+                            echo "✅ Signed Image with Digest: ${IMAGE_NAME}@\$DIGEST"
                         '''
                     }
                 }
@@ -220,14 +220,16 @@ pipeline {
                     withCredentials([file(credentialsId: 'cosign-public-key-file', variable: 'COSIGN_KEY_FILE')]) {
                         sh '''
                             set -e
-                            echo "[Cosign] Verifying ${IMAGE_NAME}:${TAG}"
-                            
-                            DIGEST=$(cosign triangulate "${IMAGE_NAME}:${TAG}")
+                            echo "[Cosign] Resolving digest for ${IMAGE_NAME}:${TAG} using crane..."
+                            DIGEST=$(crane digest "${IMAGE_NAME}:${TAG}")
+                            IMAGE_REF="${IMAGE_NAME}@${DIGEST}"
+
+                            echo "[Cosign] Verifying $IMAGE_REF"
                             cosign verify \
                                 --key "$COSIGN_KEY_FILE" \
-                                "$DIGEST"
+                                "$IMAGE_REF"
         
-                            echo "✅ Verification succeeded: $DIGEST"
+                            echo "✅ Verification succeeded: $IMAGE_REF"
                         '''
                     }
                 }
