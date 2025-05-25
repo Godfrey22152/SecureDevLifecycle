@@ -188,14 +188,16 @@ pipeline {
                 script {
                     echo "[Cosign] Version Check"
                     sh 'cosign version'
-        
-                    withCredentials([file(credentialsId: 'cosign-private-key-file', variable: 'COSIGN_KEY_FILE')]) {
+                    
+                    withCredentials([
+                        file(credentialsId: 'cosign-private-key-file', variable: 'COSIGN_KEY_FILE'),
+                        string(credentialsId: 'cosign-password', variable: 'COSIGN_PASSWORD')
+                    ]) {
                         sh '''
                             set -e  # Exit immediately on error
                             echo "[Cosign] Signing ${REGISTRY}/${IMAGE_NAME}:${TAG}"
-        
-                            # Sign with key file (no interpolation)
-                            cosign sign \
+
+                            echo "$COSIGN_PASSWORD" | cosign sign \
                                 --key "$COSIGN_KEY_FILE" \
                                 --yes \
                                 --recursive \
