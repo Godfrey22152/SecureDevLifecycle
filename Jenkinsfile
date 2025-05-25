@@ -241,41 +241,23 @@ pipeline {
                 script {
                     withCredentials([gitUsernamePassword(credentialsId: 'git-cred', gitToolName: 'Default')]) {
                         sh '''
-                            # Git Clone Repository
-                            git clone -b container-security --single-branch https://github.com/Godfrey22152/SecureDevLifecycle.git Manifest_Files 
                             cd Manifest_Files
                             git checkout container-security
-                            
-                            # List files to confirm the presence of trainbook-deployment.yaml file in the Manifest_Files folder.
-                            ls -l 
 
-                            # Get the absolute path for the current directory
-                            repo_dir=$(pwd)
+                            echo "Before update:"
+                            cat trainbook-deployment.yaml
                             
                             # Use the absolute path for sed
-                            sed -i "s|^  image: .*|  image: ${IMAGE_NAME}:${TAG}|" "${repo_dir}/trainbook-deployment.yaml"
-                        '''
-                        
-                        // Confirm the change
-                        sh '''
-                            echo "Updated YAML Manifest File Content:"
-                            cat Manifest_Files/trainbook-deployment.yaml
+                            sed -i "s|^  image: .*|  image: ${IMAGE_NAME}:${TAG}|" trainbook-deployment.yaml
 
-                        '''
-                        
-                        // Configure Git for committing changes and pushing
-                        sh '''
-                            cd Manifest_Files   #Ensure you are inside the cloned repo. 
+                            echo "Updated Trainbook Manifest Deployment File Content:"
+                            cat trainbook-deployment.yaml
+                            
                             git config user.email "godfreyifeanyi45@gmail.com"
                             git config user.name "Godfrey22152"
-                        '''
-                        
-                        // Commit and push Updated YAML file back to the repository
-                        sh '''
-                            cd Manifest_Files
-                            ls
+                            
                             git add trainbook-deployment.yaml
-                            git commit -m "Updated image tag to ${TAG} by Jenkins"
+                            git commit -m "Updated image tag to ${TAG} by Jenkins" || echo "No changes to commit"
                             git push origin container-security
                         '''
                     }
