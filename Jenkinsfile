@@ -116,7 +116,9 @@ pipeline {
                     passwordVariable: 'GITHUB_TOKEN', 
                     usernameVariable: 'GITHUB_USER'
                 )]) {
-                    sh "docker login ${env.REGISTRY} -u \$GITHUB_USER -p \$GITHUB_TOKEN"
+                    sh '''
+                        echo "$GITHUB_TOKEN" | docker login ${env.REGISTRY} -u "$GITHUB_USER" --password-stdin
+                    '''
                 }
             }
         }
@@ -195,15 +197,15 @@ pipeline {
                             set -e  # Exit immediately on error
                             echo "[Cosign] Signing ${REGISTRY}/${IMAGE_NAME}:${TAG}"
 
+                            # Capture image digest and Sign image with digest instead of image tag 
+                            DIGEST=$(cosign triangulate "${REGISTRY}/${IMAGE_NAME}:${TAG}")
                             echo "$COSIGN_PASSWORD" | cosign sign \
                                 --key "$COSIGN_KEY_FILE" \
                                 --yes \
                                 --recursive \
-                                "${REGISTRY}/${IMAGE_NAME}:${TAG}"
+                                "$DIGEST"
         
-                            # Capture digest after successful signing
-                            DIGEST=$(cosign triangulate "${REGISTRY}/${IMAGE_NAME}:${TAG}")
-                            echo "✅ Signed digest: $DIGEST"
+                            echo "✅ Signed image digest: $DIGEST"
                         '''
                     }
                 }
@@ -220,13 +222,12 @@ pipeline {
                         sh '''
                             set -e
                             echo "[Cosign] Verifying ${REGISTRY}/${IMAGE_NAME}:${TAG}"
-        
+                            
+                            DIGEST=$(cosign triangulate "${REGISTRY}/${IMAGE_NAME}:${TAG}")
                             cosign verify \
                                 --key "$COSIGN_KEY_FILE" \
-                                "${REGISTRY}/${IMAGE_NAME}:${TAG}"
+                                "$DIGEST"
         
-                            # Capture digest after successful verification
-                            DIGEST=$(cosign triangulate "${REGISTRY}/${IMAGE_NAME}:${TAG}")
                             echo "✅ Verification succeeded: $DIGEST"
                         '''
                     }
