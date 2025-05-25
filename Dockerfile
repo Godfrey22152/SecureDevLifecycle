@@ -30,10 +30,13 @@ RUN jlink \
 # Stage 3: Prepare Slim Tomcat base image
 FROM alpine:3.21 AS tomcat-base
 
+# Use ash with pipefail enabled to satisfy Hadolint
+SHELL ["/bin/ash", "-o", "pipefail", "-c"]
+
 ENV TOMCAT_VERSION=9.0.105
 ENV TOMCAT_SHA512=904f10378ee2c7c68529edfefcba50c77eb677aa4586cfac0603e44703b0278f71f683b0295774f3cdcb027229d146490ef2c8868d8c2b5a631cf3db61ff9956
 
-RUN apk add --no-cache curl tar && \
+RUN apk add --no-cache curl=8.12.1-r1 tar=1.35-r3 && \
     curl -fsSL https://dlcdn.apache.org/tomcat/tomcat-9/v${TOMCAT_VERSION}/bin/apache-tomcat-${TOMCAT_VERSION}.tar.gz -o tomcat.tar.gz && \
     echo "$TOMCAT_SHA512  tomcat.tar.gz" | sha512sum -c - && \
     tar -xzf tomcat.tar.gz -C /opt && \
