@@ -245,9 +245,11 @@ pipeline {
                 script {
                     withCredentials([gitUsernamePassword(credentialsId: 'git-cred', gitToolName: 'Default')]) {
                         sh '''
+                            # Git Clone Repository
+                            git clone -b deployment --single-branch https://github.com/Godfrey22152/SecureDevLifecycle.git Manifest_Files 
                             cd Manifest_Files
-                            git checkout container-security
-
+                            git checkout deployment
+                            
                             echo "Before update:"
                             cat trainbook-deployment.yaml
 
@@ -266,7 +268,7 @@ pipeline {
                             
                             git add trainbook-deployment.yaml
                             git commit -m "Updated image to digest: ${IMAGE_WITH_DIGEST} by Jenkins" || echo "No changes to commit"
-                            git push origin container-security
+                            git push origin deployment
                         '''
                     }
                 }
