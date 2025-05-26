@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Define namespace
+# Define Resources
 NAMESPACE="webapps"
 ROLE="jenkins-role"
 ROLEBINDING="jenkins-rolebinding"
