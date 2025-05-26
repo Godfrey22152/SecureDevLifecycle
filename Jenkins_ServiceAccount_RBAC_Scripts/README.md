@@ -21,7 +21,7 @@ This repository contains the necessary scripts and configurations to automate th
     apiVersion: rbac.authorization.k8s.io/v1
     kind: Role
     metadata:
-      name: app-role
+      name: jenkins-role
       namespace: webapps
     rules:
 
@@ -80,12 +80,12 @@ This repository contains the necessary scripts and configurations to automate th
     apiVersion: rbac.authorization.k8s.io/v1
     kind: RoleBinding
     metadata:
-    name: app-rolebinding
+    name: jenkins-rolebinding
     namespace: webapps
     roleRef:
     apiGroup: rbac.authorization.k8s.io
     kind: Role
-    name: app-role
+    name: jenkins-role
     subjects:
     - namespace: webapps
     kind: ServiceAccount
@@ -125,8 +125,8 @@ To create the Jenkins ServiceAccount and associated RBAC resources, run the `cre
 1. Clone the repository and navigate to the project directory.
 
    ```bash
-   git clone https://github.com/Godfrey22152/Smart-Traffic-Switching-A-Blue-Green-Deployment-Solution.git
-   cd Smart-Traffic-Switching-A-Blue-Green-Deployment-Solution/Jenkins_ServiceAccount_RBAC_Scripts
+   git clone -b deployment --single-branch https://github.com/Godfrey22152/SecureDevLifecycle.git && cd 
+   SecureDevLifecycle/Jenkins_ServiceAccount_RBAC_Scripts
    ```
 2. Make the `create_jenkins_rbac.sh` script executable:
    ```bash
@@ -148,19 +148,19 @@ Namespace webapps does not exist. Creating namespace...
 namespace/webapps created
 Creating Jenkins ServiceAccount, Role, RoleBinding, and Secret...
 serviceaccount/jenkins created
-role.rbac.authorization.k8s.io/app-role created
-rolebinding.rbac.authorization.k8s.io/app-rolebinding created
+role.rbac.authorization.k8s.io/jenkins-role created
+rolebinding.rbac.authorization.k8s.io/jenkins-rolebinding created
 secret/jenkins-secret created
 NAME      SECRETS   AGE
-jenkins   0         0s
-NAME       CREATED AT
-app-role   2024-10-07T16:24:44Z
-NAME              ROLE            AGE
-app-rolebinding   Role/app-role   0s
-Waiting for the secret to be created...
-ServiceAccount secret created: jenkins-secret
-Secret token for the ServiceAccount jenkins: <your-secret-token>
-Jenkins service account and RBAC resources created successfully!
+jenkins   0         1s
+NAME           CREATED AT
+jenkins-role   2025-05-26T19:03:45Z
+NAME                  ROLE                AGE
+jenkins-rolebinding   Role/jenkins-role   3s
+Waiting for the jenkins-secret secret to be created...
+Jenkins ServiceAccount secret created: jenkins-secret
+Secret token for the Jenkins ServiceAccount: <your-secret-token>
+Jenkins ServiceAccount and RBAC resources created successfully!
 ```
 
 ### 2. Delete Jenkins Service Account and RBAC Resources
@@ -186,17 +186,17 @@ To delete all resources created by the Jenkins RBAC setup, use the `delete_jenki
 ```bash
 Deleting Secret jenkins-secret in namespace webapps...
 secret "jenkins-secret" deleted
-Deleting RoleBinding app-rolebinding in namespace webapps...
-rolebinding.rbac.authorization.k8s.io "app-rolebinding" deleted
-Deleting Role app-role in namespace webapps...
-role.rbac.authorization.k8s.io "app-role" deleted
-Deleting ServiceAccount jenkins in namespace webapps...
+Deleting RoleBinding jenkins-rolebinding in namespace webapps...
+rolebinding.rbac.authorization.k8s.io "jenkins-rolebinding" deleted
+Deleting Role jenkins-role in namespace webapps...
+role.rbac.authorization.k8s.io "jenkins-role" deleted
+Deleting Jenkins ServiceAccount in namespace webapps...
 serviceaccount "jenkins" deleted
 Verifying that all resources are deleted...
 Secret jenkins-secret deleted successfully.
-RoleBinding app-rolebinding deleted successfully.
-Role app-role deleted successfully.
-ServiceAccount jenkins deleted successfully.
+RoleBinding jenkins-rolebinding deleted successfully.
+Role jenkins-role deleted successfully.
+ServiceAccount jenkins-secret deleted successfully.
 Deleting webapps Namespace ...
 webapps Namespace and all other resources have been deleted successfully.
 ```
@@ -207,8 +207,8 @@ webapps Namespace and all other resources have been deleted successfully.
 This file contains the Kubernetes resources for Jenkins' RBAC setup in the `webapps` namespace:
 
 - **ServiceAccount: `jenkins`**
-- **Role: `app-role`** with permissions to manage various Kubernetes resources (pods, services, configmaps, etc.).
-- **RoleBinding: `app-rolebinding`** that binds the `app-role` to the `jenkins` ServiceAccount.
+- **Role: `jenkins-role`** with permissions to manage various Kubernetes resources (pods, services, configmaps, etc.).
+- **RoleBinding: `jenkins-rolebinding`** that binds the `jenkins-role` to the `jenkins` ServiceAccount.
 - **Secret: `jenkins-secret`** containing the service account token for authentication.
 
 ### `create_jenkins_rbac.sh`
