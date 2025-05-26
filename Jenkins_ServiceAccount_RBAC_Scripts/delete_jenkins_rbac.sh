@@ -1,11 +1,12 @@
 #!/bin/bash
 
-# Define namespace
+# Define Resources
 NAMESPACE="webapps"
-ROLE="app-role"
-ROLEBINDING="app-rolebinding"
+ROLE="jenkins-role"
+ROLEBINDING="jenkins-rolebinding"
 SECRET="jenkins-secret"
 SERVICEACCOUNT="jenkins"
+PROCESS_NAME="Jenkins ServiceAccount"
 
 # Delete the Secret
 echo "Deleting Secret $SECRET in namespace $NAMESPACE..."
@@ -20,7 +21,7 @@ echo "Deleting Role $ROLE in namespace $NAMESPACE..."
 kubectl delete role $ROLE -n $NAMESPACE
 
 # Delete the ServiceAccount
-echo "Deleting ServiceAccount $SERVICEACCOUNT in namespace $NAMESPACE..."
+echo "Deleting $PROCESS_NAME in namespace $NAMESPACE..."
 kubectl delete serviceaccount $SERVICEACCOUNT -n $NAMESPACE
 
 # Verify that the resources are deleted
