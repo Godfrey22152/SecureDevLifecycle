@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: trainbook-app
-        image: ghcr.io/godfrey22152/trainbook-app@sha256:5214114dec002ec7c87a7465eeee89e0b32b28579e3946491992c9ee05661113
+        image: ghcr.io/godfrey22152/trainbook-app@sha256:8f3bad4514451378ef180bce0975aaa31af6ee3b85237de69df8faa96a433ce0
         ports:
         - containerPort: 8080
         env:
