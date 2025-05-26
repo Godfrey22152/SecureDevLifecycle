@@ -246,8 +246,8 @@ pipeline {
                     withCredentials([gitUsernamePassword(credentialsId: 'git-cred', gitToolName: 'Default')]) {
                         sh '''
                             # Git Clone Repository
-                            git clone -b deployment --single-branch https://github.com/Godfrey22152/SecureDevLifecycle.git Manifest_Files 
-                            cd Manifest_Files
+                            git clone -b deployment --single-branch https://github.com/Godfrey22152/SecureDevLifecycle.git Manifests/ 
+                            cd Manifests/Manifest_Files
                             git checkout deployment
                             
                             echo "Before update:"
