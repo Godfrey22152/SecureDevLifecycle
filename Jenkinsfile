@@ -25,9 +25,9 @@ pipeline {
             steps {
                 script {
                     withKubeConfig(
-                        caCertificate: ''
+                        caCertificate: '',
                         clusterName: "${KUBE_CLUSTER_NAME}",
-                        contextName: ''
+                        contextName: '',
                         credentialsId: "${KUBE_CREDENTIALS_ID}",
                         namespace: "${KUBE_NAMESPACE}",
                         serverUrl: "${KUBE_SERVER_URL}",
@@ -43,9 +43,9 @@ pipeline {
             steps {
                 script {
                     withKubeConfig(
-                        caCertificate: ''
+                        caCertificate: '',
                         clusterName: "${KUBE_CLUSTER_NAME}",
-                        contextName: ''
+                        contextName: '',
                         credentialsId: "${KUBE_CREDENTIALS_ID}",
                         namespace: "${KUBE_NAMESPACE}",
                         serverUrl: "${KUBE_SERVER_URL}",
@@ -54,7 +54,7 @@ pipeline {
                         sh """
                             echo "Waiting for deployment to stabilize..."
                             sleep 30
-                            kubectl get pods trainbook-app -n ${KUBE_NAMESPACE}
+                            kubectl get pods -n ${KUBE_NAMESPACE}
                             kubectl get svc trainbook-service -n ${KUBE_NAMESPACE}
                             kubectl get ingress trainbook-ingress -n ${KUBE_NAMESPACE}
                         """
