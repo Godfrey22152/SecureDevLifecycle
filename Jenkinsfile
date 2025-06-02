@@ -7,10 +7,6 @@ pipeline {
         DEPLOYMENT_STATUS = ''
     }
 
-    options {
-        buildDiscarder(logRotator(numToKeepStr: '2'))
-    }
-
     stages {
         stage('Run All Branch Jobs in Parallel') {
             parallel {
