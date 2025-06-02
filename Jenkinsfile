@@ -1,6 +1,10 @@
 pipeline {
     agent { label 'slave-1' }
 
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '2'))
+    }
+
     environment {
         IMAGE_NAME = 'ghcr.io/godfrey22152/trainbook-app'
         GITHUB_CREDENTIALS_ID = 'git-cred'
