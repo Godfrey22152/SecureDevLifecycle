@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: trainbook-app
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: trainbook-app
@@ -40,4 +40,6 @@ spec:
             port: 8080
           initialDelaySeconds: 5
           periodSeconds: 10
+      imagePullSecrets:
+      - name: regcred  # Secret to pull image from private registry
 
