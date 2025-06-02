@@ -1,9 +1,5 @@
 pipeline {
     agent {label 'slave-1'}
-
-    options {
-        buildDiscarder(logRotator(numToKeepStr: '2'))
-    }
     
     parameters {
         string(name: 'RELEASE_TYPE', description: 'Release type (e.g., prod, staging, dev)', defaultValue: 'dev')
