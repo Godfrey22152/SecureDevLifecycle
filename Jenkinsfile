@@ -5,6 +5,10 @@ pipeline {
         jdk 'jdk17'
         maven 'maven3'
     }
+
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '2'))
+    }
     
     environment {
         SCANNER_HOME = tool 'sonar-scanner'
