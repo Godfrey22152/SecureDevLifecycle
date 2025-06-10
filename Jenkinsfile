@@ -245,6 +245,12 @@ pipeline {
                 script {
                     withCredentials([gitUsernamePassword(credentialsId: 'git-cred', gitToolName: 'Default')]) {
                         sh '''
+                            # Clean up existing directory if it exists
+                            if [ -d "Manifests" ]; then
+                                echo "⚠️ Directory 'Manifests' exists. Deleting it to avoid git clone failure..."
+                                rm -rf Manifests
+                            fi
+
                             # Git Clone Repository
                             git clone -b deployment --single-branch https://github.com/Godfrey22152/SecureDevLifecycle.git Manifests/ 
                             cd Manifests/Manifest_Files
