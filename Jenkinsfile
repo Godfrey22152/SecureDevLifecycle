@@ -36,7 +36,7 @@ pipeline {
         stage('Deploy Kubernetes Resources') {
             steps {
                 script {
-                    withKubeConfig(
+                    withKubeConfig([
                         caCertificate: '',
                         clusterName: "${KUBE_CLUSTER_NAME}",
                         contextName: '',
@@ -44,7 +44,7 @@ pipeline {
                         namespace: "${KUBE_NAMESPACE}",
                         serverUrl: "${KUBE_SERVER_URL}",
                         restrictKubeConfigAccess: false
-                    ) {
+                    ]) {
                         sh "kubectl apply -f Manifest_Files/ -n ${KUBE_NAMESPACE}"
                     }
                 }
@@ -54,7 +54,7 @@ pipeline {
         stage('Verify Deployment Resources') {
             steps {
                 script {
-                    withKubeConfig(
+                    withKubeConfig([
                         caCertificate: '',
                         clusterName: "${KUBE_CLUSTER_NAME}",
                         contextName: '',
@@ -62,7 +62,7 @@ pipeline {
                         namespace: "${KUBE_NAMESPACE}",
                         serverUrl: "${KUBE_SERVER_URL}",
                         restrictKubeConfigAccess: false
-                    ) {
+                    ]) {
                         sh """
                             echo "Waiting for deployment to stabilize..."
                             sleep 30
@@ -74,7 +74,6 @@ pipeline {
                 }
             }
         }
-    }
 
     post {
         always {
