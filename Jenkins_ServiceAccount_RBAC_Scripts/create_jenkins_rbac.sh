@@ -46,7 +46,9 @@ else
     echo "Error: Could not retrieve the token from the secret."
   else
     echo "Secret token for the $PROCESS_NAME:"
+    echo "---------------------------------------------------------------------------------------"
     echo "$SECRET_TOKEN"
+    echo "---------------------------------------------------------------------------------------"
   fi
 fi
 
