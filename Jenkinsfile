@@ -3,7 +3,7 @@ pipeline {
 
     options {
         timestamps()
-        buildDiscarder(logRotator(numToKeepStr: '10'))
+        buildDiscarder(logRotator(numToKeepStr: '2'))
     }
 
     parameters {
@@ -18,6 +18,7 @@ pipeline {
     environment {
         SCANNER_HOME = tool 'sonar-scanner'
         SLACK_CHANNEL = '#devops-projects'
+        REPO_URL = 'https://github.com/Godfrey22152/SecureDevLifecycle.git'
     }
 
     stages {
@@ -25,7 +26,7 @@ pipeline {
             steps {
                 git branch: "${params.BRANCH_NAME}", 
                     credentialsId: 'git-cred', 
-                    url: 'https://github.com/Godfrey22152/SecureDevLifecycle.git'
+                    url: "${env.REPO_URL}"
                 sh 'mvn --version'
             }
         }
