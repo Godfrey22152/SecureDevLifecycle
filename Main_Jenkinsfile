@@ -1,6 +1,10 @@
 pipeline {
     agent any
 
+    parameters {
+        string(name: 'BRANCH_NAME', defaultValue: 'quality-assurance', description: 'Branch to build')
+    }
+
     tools {
         jdk 'jdk17'
         maven 'maven3'
@@ -13,7 +17,7 @@ pipeline {
     stages {
         stage('Checkout & Initialize') {
             steps {
-                git branch: 'quality-assurance', 
+                git branch: "${params.BRANCH_NAME}",
                      credentialsId: 'git-cred', 
                      url: 'https://github.com/Godfrey22152/SecureDevLifecycle.git'
                 sh 'mvn --version' // Verify environment
@@ -133,7 +137,7 @@ pipeline {
         success {
             archiveArtifacts artifacts: 'target/*.war, target/**/*.xml, target/**/*.html', fingerprint: true
         
-            slackSend channel: '#devops-projects',
+            slackSend channel: "${env.SLACK_CHANNEL}",
                       color: 'good',
                       message: """
                         ✅ *Build Successful* ✅
@@ -148,7 +152,7 @@ pipeline {
                       """
         }
         failure {
-            slackSend channel: '#devops-projects',
+            slackSend channel: "${env.SLACK_CHANNEL}",
                       color: 'danger',
                       message: """
                         ❌ *Build Failed* ❌
