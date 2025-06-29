@@ -1,6 +1,11 @@
 pipeline {
     agent any
 
+    options {
+        timestamps()
+        buildDiscarder(logRotator(numToKeepStr: '2'))
+    }
+
     parameters {
         string(name: 'BRANCH_NAME', defaultValue: 'quality-assurance', description: 'Branch to build')
     }
@@ -12,6 +17,8 @@ pipeline {
     
     environment {
         SCANNER_HOME = tool 'sonar-scanner'
+        SLACK_CHANNEL = '#devops-projects'
+        REPO_URL = 'https://github.com/Godfrey22152/SecureDevLifecycle.git'
     }
 
     stages {
@@ -19,7 +26,7 @@ pipeline {
             steps {
                 git branch: "${params.BRANCH_NAME}",
                      credentialsId: 'git-cred', 
-                     url: 'https://github.com/Godfrey22152/SecureDevLifecycle.git'
+                     url: "${env.REPO_URL}"
                 sh 'mvn --version' // Verify environment
             }
         }
@@ -144,11 +151,12 @@ pipeline {
                         *Job*: ${env.JOB_NAME} #${env.BUILD_NUMBER}
                         *Build URL*: ${env.BUILD_URL}
                         *Duration*: ${currentBuild.durationString}
-                        *Project Artifact*: ${env.BUILD_URL}target/*.war
-                        *SpotBugs Report*: ${env.BUILD_URL}target/spotbugs/spotbugsXml.xml
-                        *OwASP Dependency Check Report*: ${env.BUILD_URL}target/OWASP-dependency-check/dependency-check-report.xml
-                        *CheckStyle Report*: ${env.BUILD_URL}target/checkstyle-report/checkstyle-result.xml
-                        *Code Coverage Report*: ${env.BUILD_URL}target/jacoco-report/index.html
+                        *Artifacts*: ${env.BUILD_URL}artifact/target/
+                        *Reports*:
+                        - *SpotBugs Report*: ${env.BUILD_URL}target/spotbugs/spotbugsXml.xml
+                        - *OwASP Dependency Check Report*: ${env.BUILD_URL}target/OWASP-dependency-check/dependency-check-report.xml
+                        - *CheckStyle Report*: ${env.BUILD_URL}target/checkstyle-report/checkstyle-result.xml
+                        - *Code Coverage Report*: ${env.BUILD_URL}target/jacoco-report/index.html
                       """
         }
         failure {
