@@ -118,20 +118,30 @@ pipeline {
         
         stage('SonarQube Analysis') {
             steps {
-                withSonarQubeEnv('sonar-server') {
-                    sh """
-                        $SCANNER_HOME/bin/sonar-scanner \
-                        -Dsonar.projectName=TrainBooking-App \
-                        -Dsonar.projectKey=TrainBooking-App \
-                        -Dsonar.java.binaries=target/classes \
-                        -Dsonar.sources=src/main/java \
-                        -Dsonar.tests=src/test/java \
-                        -Dsonar.coverage.jacoco.xmlReportPaths=**/jacoco.xml
-                    """
+                catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+                    withSonarQubeEnv('sonar-server') {
+                        sh """
+                            $SCANNER_HOME/bin/sonar-scanner \
+                            -Dsonar.projectName=TrainBooking-App \
+                            -Dsonar.projectKey=TrainBooking-App \
+                            -Dsonar.java.binaries=target/classes \
+                            -Dsonar.sources=src/main/java \
+                            -Dsonar.tests=src/test/java \
+                            -Dsonar.coverage.jacoco.xmlReportPaths=**/jacoco.xml
+                        """
+                    }
                 }
             }
         }
-        
+
+        stage('Quality Gate') {
+            steps {
+                timeout(time: 2, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
+
         stage('Publish Artifacts') {
             steps {
                 withMaven(globalMavenSettingsConfig: 'maven-settings', jdk: 'jdk17', maven: 'maven3', mavenSettingsConfig: '', traceability: true) {
