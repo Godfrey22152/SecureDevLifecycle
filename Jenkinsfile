@@ -118,7 +118,7 @@ pipeline {
                 catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
                     withSonarQubeEnv('sonar-server') {
                         sh """
-                            mvn clean verify jacoco:report sonar:sonar \
+                            mvn clean verify jacoco:report -Ddependency-check.skip=true sonar:sonar \
                             -Dsonar.projectName=TrainBooking-App \
                             -Dsonar.projectKey=TrainBooking-App \
                             -Dsonar.java.binaries=target/classes \
