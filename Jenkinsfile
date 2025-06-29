@@ -87,6 +87,9 @@ pipeline {
         }
 
         stage('Unit Tests & Reports') {
+            steps {
+                echo 'Running Unit Test and Generating the reports...'
+            }
             post {
                 always {
                     junit 'target/surefire-reports/*.xml'
