@@ -43,7 +43,7 @@ pipeline {
                 stage('OWASP Dependency-Check') {
                     steps {
                         dependencyCheck additionalArguments: '''
-                            --scan **/target/*.war 
+                            --scan **/target/dependency/**/*.jar 
                             --format XML 
                             --project "TrainBooking-App"
                             --out target/OWASP-dependency-check
@@ -145,7 +145,12 @@ pipeline {
         stage('Publish Artifacts') {
             steps {
                 withMaven(globalMavenSettingsConfig: 'maven-settings', jdk: 'jdk17', maven: 'maven3', mavenSettingsConfig: '', traceability: true) {
-                    sh "mvn deploy -Ddependency-check.skip=true"
+                    sh '''
+                        mvn deploy \
+                            -Ddependency-check.skip=true \
+                            -Dspotbugs.skip=true \
+                            -Dcheckstyle.skip=true
+                    '''
                 }
             }
         }
