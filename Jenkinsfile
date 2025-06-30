@@ -43,7 +43,7 @@ pipeline {
                 stage('OWASP Dependency-Check') {
                     steps {
                         dependencyCheck additionalArguments: '''
-                            --scan **/target/dependency/**/*.jar 
+                            --scan **/target/*.war 
                             --format XML 
                             --project "TrainBooking-App"
                             --out target/OWASP-dependency-check
