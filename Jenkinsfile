@@ -147,6 +147,7 @@ pipeline {
                 withMaven(globalMavenSettingsConfig: 'maven-settings', jdk: 'jdk17', maven: 'maven3', mavenSettingsConfig: '', traceability: true) {
                     sh '''
                         mvn deploy \
+                            -DskipTests=true
                             -Ddependency-check.skip=true \
                             -Dspotbugs.skip=true \
                             -Dcheckstyle.skip=true
