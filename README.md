@@ -41,20 +41,22 @@ Built with **[Jenkins Declarative Pipeline](./Jenkinsfile)**, this solution leve
 
 ## 📂 Pipeline Stages and What They Do
 
-### ✅ Stage: Checkout & Initialize
+### 1️⃣ ✅ Stage: Checkout & Initialize
 
 * Clones source code from GitHub using `git-cred`(For a Private Repository).
 * Confirms the availability of Maven using `mvn --version`.
 
-### ⚙️ Stage: Build
+### 2️⃣ ⚙️ Stage: Build
 
 * Executes `mvn clean package` to build the project.
 
-### 🔒 Stage: Security & Quality Checks (Parallel Execution)
+---
+
+### 3️⃣ 🔒 Stage: Security & Quality Checks (Parallel Execution)
 ![Parallel Execution](images/parallel-execution.png)
 
 
-#### 🛡️ OWASP Dependency-Check
+### 🛡️ OWASP Dependency-Check
 
 **[OWASP Dependency-Check](https://owasp.org/www-project-dependency-check/)** is a software composition analysis (SCA) tool that identifies publicly disclosed vulnerabilities in project dependencies. It leverages the National Vulnerability Database (NVD) and other sources to scan dependencies, particularly `.jar`, `.war`, and `.ear` files in Java applications.
 
@@ -62,7 +64,7 @@ In the context of this project, it plays a **critical role** in ensuring complia
 
 ---
 
-##### 🔍 Jenkins Pipeline Stage: `OWASP Dependency-Check`
+#### 🔍 Jenkins Pipeline Stage: `OWASP Dependency-Check`
 
 ```groovy
 stage('OWASP Dependency-Check') {
@@ -79,14 +81,14 @@ stage('OWASP Dependency-Check') {
 }
 ```
 
-##### 📌 What This Stage Does:
+#### 📌 What This Stage Does:
 
 * **Scans dependencies** in the build directory (`target/dependency/**/*.jar`) for known vulnerabilities.
 * **Generates XML-formatted reports** to `target/OWASP-dependency-check/` for later consumption.
 * **Publishes results** to the Jenkins build UI so users can review found vulnerabilities and decide on mitigation.
 * **Links the report** into the Jenkins UI through the `dependencyCheckPublisher` step for easy access by developers and auditors.
 
-##### 📈 Why It Matters:
+#### 📈 Why It Matters:
 
 * Embeds security into the development lifecycle (shift-left security).
 * Helps meet regulatory compliance and security standards (e.g., ISO 27001, SOC2).
@@ -94,12 +96,13 @@ stage('OWASP Dependency-Check') {
 
 This ensures that security and compliance are not afterthoughts—they're integrated into the very heart of CI/CD workflows.
 
-##### 🛡️ OWASP Dependency-Check Results
+#### 🛡️ OWASP Dependency-Check Results
 
-###### 🛡️ OWASP Dependency-Check Trend
+##### 🛡️ OWASP Dependency-Check Trend
+
 ![OWASP Dependency-Check](images/OWASP-Dependency-Check-Trend.png)
 
-###### Dependency-Check Results
+##### Dependency-Check Results
 ![OWASP Dependency-Check](images/OWASP-Dependency-Check-Result.png)
 ![OWASP Dependency-Check](images/OWASP-Dependency-Check-Result2.png)
 ![OWASP Dependency-Check](images/OWASP-Dependency-Check-Result3.png)
@@ -107,7 +110,7 @@ This ensures that security and compliance are not afterthoughts—they're integr
 
 ---
 
-#### 🐞 SpotBugs Analysis
+### 🐞 SpotBugs Analysis
 
 **[SpotBugs](https://spotbugs.github.io/)** is a static code analysis tool that detects potential bugs in Java bytecode. It examines compiled `.class` files for common programming errors such as null pointer dereferences, infinite recursive loops, dead stores, and other patterns that may lead to runtime failures or subtle bugs.
 
@@ -115,7 +118,7 @@ In this project, SpotBugs serves as a proactive quality gate to catch defects **
 
 ---
 
-##### 🔍 Jenkins Pipeline Stage: `SpotBugs Analysis`
+#### 🔍 Jenkins Pipeline Stage: `SpotBugs Analysis`
 
 ```groovy
 stage('SpotBugs Analysis') {
@@ -135,7 +138,7 @@ stage('SpotBugs Analysis') {
 }
 ```
 
-##### 📌 What This Stage Does:
+#### 📌 What This Stage Does:
 
 * Runs the Maven SpotBugs plugin to scan the compiled codebase.
 * Generates a SpotBugs report in XML format (`spotbugsXml.xml`).
@@ -143,7 +146,7 @@ stage('SpotBugs Analysis') {
 * Archives the report as a build artifact for future inspection.
 * Marks the build as failed if SpotBugs detects critical issues.
 
-##### ✅ Why SpotBugs Is Important:
+#### ✅ Why SpotBugs Is Important:
 
 * Detects hidden defects at an early stage.
 * Improves code maintainability and readability.
@@ -152,19 +155,19 @@ stage('SpotBugs Analysis') {
 
 Including SpotBugs as a parallel stage alongside other QA checks reinforces a culture of **proactive quality assurance** in this secure and compliant pipeline.
 
-##### 🐞 SpotBugs Warnings Result
-###### 🐞 SpotBugs Warnings Trend
+#### 🐞 SpotBugs Warnings Result
+##### 🐞 SpotBugs Warnings Trend
 ![SpotBugs Warnings Trend](images/SpotBugs-Warnings-Trend.png)
 ![SpotBugs Warnings Trend](images/SpotBugs-Warnings-Trend2.png)
 
-###### 🐞 SpotBugs Warnings 
+##### 🐞 SpotBugs Warnings 
 ![SpotBugs Warnings Result](images/SpotBugs-Warnings-Result.png)
 ![SpotBugs Warnings Result](images/SpotBugs-Warnings-Result2.png)
 ![SpotBugs Warnings Result](images/SpotBugs-Warnings-Result3.png)
 
 ---
 
-#### 📏 Checkstyle Analysis
+### 📏 Checkstyle Analysis
 
 **[Checkstyle](https://checkstyle.sourceforge.io/)** is a development tool that helps programmers write Java code that adheres to a defined set of coding standards. It performs static analysis of the source code to ensure that the style guidelines—such as indentation, naming conventions, line length, and Javadoc presence—are consistently followed across the codebase.
 
@@ -172,7 +175,7 @@ In this project, **Checkstyle** plays a key role in maintaining **code consisten
 
 ---
 
-##### 📋 Jenkins Pipeline Stage: `Checkstyle Analysis`
+#### 📋 Jenkins Pipeline Stage: `Checkstyle Analysis`
 ```groovy
 stage('Checkstyle Analysis') { 
     steps {
@@ -191,14 +194,14 @@ stage('Checkstyle Analysis') {
 }
 ```
 
-##### 📌 What This Stage Does:
+#### 📌 What This Stage Does:
 - Executes the Maven Checkstyle plugin to scan the Java source code.
 - Generates a detailed XML report (`checkstyle-result.xml`) containing all style violations.
 - Uses Jenkins’ **Warnings Next Generation** plugin to visualize the issues.
 - Archives the Checkstyle report for inspection and auditing purposes.
 - Fails the pipeline when serious formatting violations are detected.
 
-##### ✅ Why Checkstyle Is Important:
+#### ✅ Why Checkstyle Is Important:
 - Encourages clean, consistent code formatting across teams.
 - Prevents the accumulation of messy or unstructured code.
 - Simplifies code reviews by enforcing uniform standards.
@@ -207,13 +210,13 @@ stage('Checkstyle Analysis') {
 
 Integrating Checkstyle into the pipeline ensures that every commit adheres to the team’s coding standards—supporting not just quality, but also **compliance and collaboration**.
 
-##### 📏 Checkstyle Analysis Result Images
+#### 📏 Checkstyle Analysis Result Images
 
-###### 📏 Checkstyle Analysis Trend
+##### 📏 Checkstyle Analysis Trend
 ![Checkstyle Analysis Trend](images/Checkstyle-Analysis-Trend.png)
 ![Checkstyle Analysis Trend](images/Checkstyle-Analysis-Trend2.png)
 
-###### 📏 Checkstyle Analysis Result
+##### 📏 Checkstyle Analysis Result
 ![Checkstyle Analysis Result](images/Checkstyle-Analysis-Result.png)
 ![Checkstyle Analysis Result](images/Checkstyle-Analysis-Result2.png)
 ![Checkstyle Analysis Result](images/Checkstyle-Analysis-Result3.png)
@@ -221,7 +224,7 @@ Integrating Checkstyle into the pipeline ensures that every commit adheres to th
 ---
 
 
-### 🧪 Unit Tests
+### 4️⃣ 🧪 Unit Tests
 
 **Unit testing** is a fundamental practice in software development where individual components or functions are tested in isolation to ensure they work as expected. Unit tests help catch bugs early, provide documentation for intended behavior, and give developers confidence when making changes or adding new features.
 
@@ -318,7 +321,7 @@ Rich and interactive report showing detailed test flows, environment, and result
 ---
 
 
-### 📊 Stage: SonarQube Analysis
+### 5️⃣ 📊 Stage: SonarQube Analysis
 
 **[SonarQube](https://docs.sonarsource.com/sonarqube-server/latest/)** is a comprehensive static code analysis tool that enables continuous inspection of code quality and security. It analyzes source code to identify bugs, vulnerabilities, code smells, duplications, and tracks code coverage from unit tests. By integrating SonarQube in a CI/CD pipeline, teams ensure that every commit meets a minimum standard of quality and compliance.
 
@@ -391,7 +394,7 @@ A summary of code quality metrics including bugs, vulnerabilities, code smells, 
 ---
 
 
-### 🚦 Stage: SonarQube Quality Gate
+### 6️⃣ 🚦 Stage: SonarQube Quality Gate
 
 * Waits (max 2 minutes) for SonarQube quality gate result.
 * Fails build if gate is not passed.
@@ -402,7 +405,7 @@ The Quality Gate result shows if the build meets the predefined quality criteria
 ![Quality Gate Result](images/sonarqube-quality-gate.png)
 
 
-### 📤📦 Stage: Publish Artifacts
+### 7️⃣ 📤📦 Stage: Publish Artifacts
 
 The `Publish Artifacts` stage is responsible for deploying the final built application and related deliverables (e.g., `.war` files, libraries) to a configured Maven repository in **[Nexus Repository](https://www.sonatype.com/products/sonatype-nexus-repository)**. This stage is essential for making build artifacts available to downstream processes, teams, or deployment environments.
 
@@ -441,7 +444,7 @@ Below are images capturing the published artifacts and Jenkins UI for artifact a
 ---
 
 
-### 📩📬 Post Build Actions
+### 8️⃣ 📩📬 Post Build Actions
 
 The **Post Build Actions** section defines what happens after the Jenkins pipeline completes its execution—whether it ends in **success** or **failure**. This stage is crucial for ensuring visibility, traceability, and feedback to the development or DevOps teams.
 
@@ -624,7 +627,7 @@ We welcome contributions and feedback. Feel free to:
 ## 🔹 Badges (To Be Added)
 
 * Build Status: ![Build](https://img.shields.io/badge/build-passing-brightgreen)
-* Test Coverage: ![Coverage](https://img.shields.io/badge/coverage-83%25-yellowgreen)
+* Test Coverage: ![Coverage](https://img.shields.io/badge/coverage-83.6%25-yellowgreen)
 * SonarQube Quality Gate: ![Quality Gate](https://img.shields.io/badge/quality--gate-passed-brightgreen)
 
 ---
