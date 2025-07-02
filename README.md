@@ -53,6 +53,7 @@ Built with **[Jenkins Declarative Pipeline](./Jenkinsfile)**, this solution leve
 ### 🔒 Stage: Security & Quality Checks (Parallel Execution)
 ![Parallel Execution](images/parallel-execution.png)
 
+
 #### 🛡️ OWASP Dependency-Check
 
 **[OWASP Dependency-Check](https://owasp.org/www-project-dependency-check/)** is a software composition analysis (SCA) tool that identifies publicly disclosed vulnerabilities in project dependencies. It leverages the National Vulnerability Database (NVD) and other sources to scan dependencies, particularly `.jar`, `.war`, and `.ear` files in Java applications.
@@ -623,7 +624,7 @@ We welcome contributions and feedback. Feel free to:
 ## 🔹 Badges (To Be Added)
 
 * Build Status: ![Build](https://img.shields.io/badge/build-passing-brightgreen)
-* Test Coverage: ![Coverage](https://img.shields.io/badge/coverage-85%25-yellowgreen)
+* Test Coverage: ![Coverage](https://img.shields.io/badge/coverage-83%25-yellowgreen)
 * SonarQube Quality Gate: ![Quality Gate](https://img.shields.io/badge/quality--gate-passed-brightgreen)
 
 ---
