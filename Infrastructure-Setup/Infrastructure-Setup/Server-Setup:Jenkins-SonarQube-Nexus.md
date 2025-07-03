@@ -253,7 +253,7 @@ docker exec nexus-container cat /nexus-data/admin.password
 
 #### 1. 🧰 Required Jenkins Plugins
 
-Plugins are installed under **Manage Jenkins → Plugins → Available Plugins**:
+Plugins are installed under **`Manage Jenkins → Plugins → Available Plugins`**:
 
 Install Required Plugins:
 
@@ -271,7 +271,7 @@ Install Required Plugins:
    - **Maven Integration**
    - **Pipeline Maven Integration**
 
-▶️ **See **[Install Required Plugins](./Infrastructure-Setup/Pipeline-Setup)** for detailed guidance.
+▶️ * See **[Install Required Plugins](./Infrastructure-Setup/Pipeline-Setup)** for detailed guidance.
 
 
 ---
@@ -279,7 +279,7 @@ Install Required Plugins:
 
 #### 2. ⚙️ Configure Tools (Global Tool Configuration):
 
-These tools are configured under **Manage Jenkins → Global Tool Configuration**:
+These tools are configured under **`Manage Jenkins → Global Tool Configuration`**:
 
    * JDK 17 (label: `jdk17`) > `JDK installations`
    * Maven 3 (label: `maven3`) > `Maven installations`
@@ -287,7 +287,7 @@ These tools are configured under **Manage Jenkins → Global Tool Configuration*
    * Dependency-Check (`OWASP-Dependency-Check`) > `Dependency-Check installations`
    * Allure Report (`Allure Commandline`) > `Allure Commandline installations`
 
-▶️ **See **[Configure Global Tools](./Infrastructure-Setup/Pipeline-Setup)** for detailed guidance.
+▶️ * See **[Configure Global Tools](./Infrastructure-Setup/Pipeline-Setup)** for detailed guidance.
 
 
 ---
@@ -295,12 +295,12 @@ These tools are configured under **Manage Jenkins → Global Tool Configuration*
 
 #### 3. 🧩 Create Managed Config File for Nexus:
 
-Config File is configured under **Manage Jenkins → Managed files → Config File Management**
+Config File is configured under **`Manage Jenkins → Managed files → Config File Management`**
 
    * **Create New Config** → **Type:** `Global Maven settings.xml`
    * **`maven-settings`** (ID for Maven `settings.xml`)
 
-▶️ **See **[Create Nexus Config file](./Infrastructure-Setup/Pipeline-Setup)** for detailed guidance.
+▶️ * See **[Create Nexus Config file](./Infrastructure-Setup/Pipeline-Setup)** for detailed guidance.
 
 
 ---
@@ -308,14 +308,14 @@ Config File is configured under **Manage Jenkins → Managed files → Config Fi
 
 #### 4. 🔑 Add Jenkins Credentials:
 
-Add Credentials under **Manage Jenkins → Credentials**
+Add Credentials under **`Manage Jenkins → Credentials`**
 
    * Git credentials (ID: `git-cred`)
    * Nexus deployment credentials (if using secured repo)
    * SonarQube Token (ID: `sonar-token`)
    * Slack Notification Credentials (ID: `slack-cred`)
 
-▶️ **See **[How to add Credentials](./Infrastructure-Setup/Pipeline-Setup)** for detailed guidance
+▶️ * See **[How to add Credentials](./Infrastructure-Setup/Pipeline-Setup)** for detailed guidance
 
 
 ---
