@@ -651,6 +651,6 @@ This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) f
 ## 👨‍💻 Author & Contact
 
 **Godfrey Ifeanyi:**
-**➡️ GitHub:** [@Godfrey22152](https://github.com/Godfrey22152)
-**➡️ LinkedIn:** [linkedin.com/in/godfrey-ifeanyi](https://www.linkedin.com/in/godfrey-ifeanyi)
-**➡️ Twitter:** [@ifeanyi\_godfrey](https://x.com/@ifeanyi_godfrey)
+- **➡️ GitHub:** [@Godfrey22152](https://github.com/Godfrey22152)
+- **➡️ LinkedIn:** [linkedin.com/in/godfrey-ifeanyi](https://www.linkedin.com/in/godfrey-ifeanyi)
+- **➡️ Twitter:** [@ifeanyi\_godfrey](https://x.com/@ifeanyi_godfrey)
