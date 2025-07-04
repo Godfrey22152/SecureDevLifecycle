@@ -15,6 +15,14 @@ Built with **[Jenkins Declarative Pipeline](./Jenkinsfile)**, this solution leve
 
 ---
 
+## 🏠 Infrastructure Setup
+
+For a detailed guildlines on how to setup the entire pipeline and infrastructure, kindly visit:
+
+➡️ **[Infrastructure Setup Directory](./Infrastructure-Setup)**.
+
+---
+
 ## 🔧 [Jenkinsfile Pipeline](./Jenkinsfile) Breakdown
 
 ### 1. 📜 Pipeline Settings
@@ -626,7 +634,7 @@ We welcome contributions and feedback. Feel free to:
 
 ---
 
-## 🔹 Badges (To Be Added)
+## 🔹 Badges 
 
 * Build Status: ![Build](https://img.shields.io/badge/build-passing-brightgreen)
 * Test Coverage: ![Coverage](https://img.shields.io/badge/coverage-83.6%25-yellowgreen)
@@ -642,7 +650,7 @@ This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) f
 
 ## 👨‍💻 Author & Contact
 
-**Godfrey Ifeanyi**
-GitHub: [@Godfrey22152](https://github.com/Godfrey22152)
-LinkedIn: [linkedin.com/in/godfrey-ifeanyi](https://www.linkedin.com/in/godfrey-ifeanyi)
-Twitter: [@ifeanyi\_godfrey](https://x.com/@ifeanyi_godfrey)
+**Godfrey Ifeanyi:**
+**➡️ GitHub:** [@Godfrey22152](https://github.com/Godfrey22152)
+**➡️ LinkedIn:** [linkedin.com/in/godfrey-ifeanyi](https://www.linkedin.com/in/godfrey-ifeanyi)
+**➡️ Twitter:** [@ifeanyi\_godfrey](https://x.com/@ifeanyi_godfrey)
