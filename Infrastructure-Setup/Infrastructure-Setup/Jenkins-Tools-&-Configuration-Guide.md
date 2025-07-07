@@ -166,7 +166,7 @@ Credentials are needed for Git access, SonarQube analysis, and Slack notificatio
   * Kind: Secret text
   * ID: `slack-cred`
   * Generated from Slack App configuration. 
-  * ⏩ See how to generate **[Webhook Token](#-slack-configuration-in-jenkins)** below.
+  * ⏩ See how to generate **[Webhook Token](#6️⃣--slack-configuration-in-jenkins)** below.
 
 
 ---
@@ -174,7 +174,7 @@ Credentials are needed for Git access, SonarQube analysis, and Slack notificatio
 
 ## 5️⃣ 📊 SonarQube Server Configuration in Jenkins
 
-After installing the **[SonarQube Scanner Plugin](#1--install-required-jenkins-plugins)** and configuring the **[SonarQube Scanner](#-sonarqube-scanner)**, configure your SonarQube server:
+After installing the **[SonarQube Scanner Plugin](#1️⃣--install-required-jenkins-plugins)** and configuring the **[SonarQube Scanner](#-sonarqube-scanner)**, configure your SonarQube server:
 
 1. Go to **Manage Jenkins → System**
 2. Scroll to **SonarQube servers**
@@ -228,7 +228,7 @@ After installing **Slack Notification Plugin**, configure Slack integration:
 
 ## 7️⃣ 🧪 Maven Project Dependencies & Plugins Setup in project's **[`pom.xml`](https://github.com/Godfrey22152/SecureDevLifecycle/blob/quality-assurance/pom.xml)**
 
-Your **[`pom.xml`](https://github.com/Godfrey22152/SecureDevLifecycle/blob/quality-assurance/pom.xml)** should include the following plugins and dependencies to support Jenkins stages:
+The **[`pom.xml`](https://github.com/Godfrey22152/SecureDevLifecycle/blob/quality-assurance/pom.xml)** should include the following plugins and dependencies to support Jenkins stages:
 
 ### 🔹 Plugin Sections (under `<build><plugins>`):
 
