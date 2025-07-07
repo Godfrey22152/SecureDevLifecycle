@@ -271,7 +271,7 @@ Install Required Plugins:
    - **Maven Integration**
    - **Pipeline Maven Integration**
 
-▶️ * See **[Install Required Plugins](./Infrastructure-Setup/Pipeline-Setup)** for detailed guidance.
+▶️ * See **[Install Required Plugins](/https://github.com/Godfrey22152/SecureDevLifecycle/blob/quality-assurance/Infrastructure-Setup/Infrastructure-Setup/Jenkins-Tools-%26-Configuration-Guide.md#1%EF%B8%8F%E2%83%A3--install-required-jenkins-plugins)** for detailed guidance.
 
 
 ---
@@ -287,7 +287,7 @@ These tools are configured under **`Manage Jenkins → Global Tool Configuration
    * Dependency-Check (`OWASP-Dependency-Check`) > `Dependency-Check installations`
    * Allure Report (`Allure Commandline`) > `Allure Commandline installations`
 
-▶️ * See **[Configure Global Tools](./Infrastructure-Setup/Pipeline-Setup)** for detailed guidance.
+▶️ * See **[Configure Global Tools](https://github.com/Godfrey22152/SecureDevLifecycle/blob/quality-assurance/Infrastructure-Setup/Infrastructure-Setup/Jenkins-Tools-%26-Configuration-Guide.md#2%EF%B8%8F%E2%83%A3-%EF%B8%8F-configure-global-tools)** for detailed guidance.
 
 
 ---
@@ -300,7 +300,7 @@ Config File is configured under **`Manage Jenkins → Managed files → Config F
    * **Create New Config** → **Type:** `Global Maven settings.xml`
    * **`maven-settings`** (ID for Maven `settings.xml`)
 
-▶️ * See **[Create Nexus Config file](./Infrastructure-Setup/Pipeline-Setup)** for detailed guidance.
+▶️ * See **[Create Nexus Config file](https://github.com/Godfrey22152/SecureDevLifecycle/blob/quality-assurance/Infrastructure-Setup/Infrastructure-Setup/Jenkins-Tools-%26-Configuration-Guide.md#3%EF%B8%8F%E2%83%A3--create-and-configure-nexus-config-file-nexus-settingsxml)** for detailed guidance.
 
 
 ---
@@ -315,11 +315,11 @@ Add Credentials under **`Manage Jenkins → Credentials`**
    * SonarQube Token (ID: `sonar-token`)
    * Slack Notification Credentials (ID: `slack-cred`)
 
-▶️ * See **[How to add Credentials](./Infrastructure-Setup/Pipeline-Setup)** for detailed guidance
+▶️ * See **[How to add Credentials](https://github.com/Godfrey22152/SecureDevLifecycle/blob/quality-assurance/Infrastructure-Setup/Infrastructure-Setup/Jenkins-Tools-%26-Configuration-Guide.md#4%EF%B8%8F%E2%83%A3--add-jenkins-credentials)** for detailed guidance
 
 
 ---
 
 Kindly visit: 
 
-➡️ **[Pipeline Setup](./Infrastructure-Setup/Pipeline-Setup)** for detailed guidance on how to setup the entire pipeline.
+➡️ **[Jenkins Tools and Configuration Setup](https://github.com/Godfrey22152/SecureDevLifecycle/blob/quality-assurance/Infrastructure-Setup/Infrastructure-Setup/Jenkins-Tools-%26-Configuration-Guide.md)** for detailed guidance on how to setup the entire pipeline.
