@@ -271,7 +271,7 @@ Install Required Plugins:
    - **Maven Integration**
    - **Pipeline Maven Integration**
 
-▶️ * See **[Install Required Plugins](/https://github.com/Godfrey22152/SecureDevLifecycle/blob/quality-assurance/Infrastructure-Setup/Infrastructure-Setup/Jenkins-Tools-%26-Configuration-Guide.md#1%EF%B8%8F%E2%83%A3--install-required-jenkins-plugins)** for detailed guidance.
+▶️ * See **[Install Required Plugins](https://github.com/Godfrey22152/SecureDevLifecycle/blob/quality-assurance/Infrastructure-Setup/Infrastructure-Setup/Jenkins-Tools-%26-Configuration-Guide.md#1%EF%B8%8F%E2%83%A3--install-required-jenkins-plugins)** for detailed guidance.
 
 
 ---
