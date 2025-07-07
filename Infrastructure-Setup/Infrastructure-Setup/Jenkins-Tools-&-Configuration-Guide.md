@@ -40,7 +40,7 @@ These tools are configured under **`Manage Jenkins` → `Global Tool Configurati
 ### 🔹 Java (JDK 17)
 
 * Scroll to **JDK installations** section
-* Click **Add JDK**
+* Click **`Add JDK`** and provide the following details:
 
   * Name: `jdk17`
   * Check **Install automatically** and Click **Add Installer**
@@ -51,7 +51,7 @@ These tools are configured under **`Manage Jenkins` → `Global Tool Configurati
 ### 🔹 Maven (Maven 3)
 
 * Scroll to **Maven installations** section
-* Click **Add Maven**
+* Click **`Add Maven`** and provide the following details:
 
   * Name: `maven3`
   * Check **Install automatically** and Click **Add Installer**
@@ -62,7 +62,7 @@ These tools are configured under **`Manage Jenkins` → `Global Tool Configurati
 ### 🔹 SonarQube Scanner
 
 * Scroll to **SonarQube Scanner installations** section
-* Click **Add SonarQube Scanner**
+* Click **Add SonarQube Scanner** and provide the following details:
 
   * Name: `sonar-scanner`
   * Check **Install automatically** and Click **Install from Maven Central**
@@ -72,7 +72,7 @@ These tools are configured under **`Manage Jenkins` → `Global Tool Configurati
 ### 🔹 OWASP Dependency-Check
 
 * Scroll to **Dependency-Check installations**
-* Click **Add Dependency-Check**
+* Click **Add Dependency-Check** and provide the following details:
 
   * Name: `OWASP-Dependency-Check`
   * Check **Install automatically** and Click **Install from github.com**
@@ -82,11 +82,13 @@ These tools are configured under **`Manage Jenkins` → `Global Tool Configurati
 ### 🔹 Allure Commandline
 
 * Scroll to **Allure Commandline installations**
-* Click **Add Allure Commandline**
+* Click **Add Allure Commandline** and provide the following details:
 
   * Name: `Allure Commandline`or Version name: `2.330`
   * Check **Install automatically** and Click **Install from Maven Central**
   * Select a recent Version from the list to install.
+    
+* **Click `Save or Apply` on the page to apply the changes.**
 
 ---
 
