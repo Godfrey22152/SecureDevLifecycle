@@ -1,6 +1,6 @@
 # 🚀 Secure and Compliant QA Pipeline for Continuous Integration with Jenkins
 
-![Pipeline Execution](images/Project-mermaid.svg)
+![Pipeline Execution](images/Project-flow-diagram.png)
 ![Pipeline Execution](images/pipeline-execution.png)
 
 This project presents a **robust, secure, and compliant CI pipeline** for Java-based applications using Jenkins. It integrates modern DevSecOps practices, ensuring your software passes through multiple layers of quality gates, security scans, and compliance checks—all automatically.
