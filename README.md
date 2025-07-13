@@ -443,7 +443,7 @@ Jenkins uses the `withMaven` step to leverage global Maven configurations and en
 
 Below are images capturing the published artifacts and Jenkins UI for artifact archiving.
 
-##### 📤 Published Artifact Summary (Jenkins UI View)
+##### 📤 Published Artifact Summary 
 
 ![Published Artifact Summary](images/Nexus-Published-Artifacts-Summary.png)
 
