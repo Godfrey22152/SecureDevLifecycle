@@ -23,11 +23,28 @@ You need the following components already running:
 vault auth enable approle
 ```
 
+### Create AppRole Credentials
+```bash
+vault write auth/approle/role/jenkins-role token_num_uses=0 secret_id_num_uses=0 policies="jenkins"
+```
+### Extract the AppRole ID at `auth/approle/role/jenkins-role/role-id`
+```bash
+vault read auth/approle/role/jenkins-role/role-id
+```
+### Reset the AppRole Secret ID
+```bash
+vault write -f auth/approle/role/jenkins-role/secret-id
+```
+### Enable Secrets
+```bash
+vault secrets enable -path=secrets kv
+```
+
 ### Create a Vault Policy for Jenkins
 
 ```bash
 vault policy write jenkins - <<EOF
-path "secret/data/jenkins/*" {
+path "secret/creds/*" {
   capabilities = ["read"]
 }
 EOF
