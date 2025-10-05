@@ -1,0 +1,79 @@
+# Stage 1: Build with Maven using Alpine
+FROM maven:3.9-eclipse-temurin-17-alpine AS builder
+
+LABEL maintainer="Odo Godfrey <godfreyifeanyi50@gmail.com>"
+LABEL org.opencontainers.image.authors="Odo Godfrey <godfreyifeanyi50@gmail.com>"
+LABEL org.opencontainers.image.description="Train-Booking App Tomcat deployment for Java web application"
+LABEL org.opencontainers.image.source="https://github.com/Godfrey22152/SecureDevLifecycle"
+
+WORKDIR /app
+
+# Copy Maven files for dependency resolution (better caching)
+COPY pom.xml ./
+
+# Pre-download dependencies (cached if pom.xml unchanged)
+RUN --mount=type=cache,target=/root/.m2 mvn -B dependency:go-offline
+
+# Copy source code
+COPY src ./src
+COPY WebContent ./WebContent
+
+# Build with optimizations (skip tests and plugins for smaller size)
+RUN --mount=type=cache,target=/root/.m2 mvn clean package -DskipTests \
+    -Dmaven.compiler.debug=false \
+    -Dmaven.compiler.debuglevel=none \
+    -Dspotbugs.skip=true \
+    -Dcheckstyle.skip=true \
+    -Djacoco.skip=true \
+    -Ddependency-check.skip=true \
+    -Dmdep.skip=true
+
+# Stage 2: Minimal runtime with JRE Alpine
+FROM eclipse-temurin:17-jre-alpine
+
+# Install minimal Tomcat
+ENV TOMCAT_VERSION=9.0.93
+ENV TOMCAT_SHA512=3069924eb7041ccc0f2aeceb7d8626793a1a073a5b739a840d7974a18ebeb26cc3374cc5f4a3ffc74d3b019c0cb33e3d1fe96296e6663ac75a73c1171811726d
+ENV CATALINA_HOME=/opt/tomcat
+ENV PATH="${CATALINA_HOME}/bin:${PATH}"
+
+# Create non-root user
+RUN addgroup -g 1000 -S tomcat && \
+    adduser -u 1000 -S -G tomcat tomcat
+
+# Install and configure Tomcat with size optimizations
+RUN apk add --no-cache --virtual .build-deps wget tar coreutils && \
+    wget -q -O tomcat.tar.gz "https://archive.apache.org/dist/tomcat/tomcat-9/v${TOMCAT_VERSION}/bin/apache-tomcat-${TOMCAT_VERSION}.tar.gz" && \
+    echo "${TOMCAT_SHA512}  tomcat.tar.gz" | sha512sum -c - && \
+    mkdir -p "${CATALINA_HOME}" && \
+    tar -xzf tomcat.tar.gz --strip-components=1 -C "${CATALINA_HOME}" && \
+    # Remove unnecessary files to minimize size
+    rm -rf "${CATALINA_HOME}/webapps/"* \
+           "${CATALINA_HOME}/bin/"*.bat \
+           "${CATALINA_HOME}/bin/commons-daemon*" \
+           "${CATALINA_HOME}/bin/tomcat-native.tar.gz" \
+           "${CATALINA_HOME}/"*.txt \
+           "${CATALINA_HOME}/"*.md \
+           "${CATALINA_HOME}/RELEASE-NOTES" \
+           tomcat.tar.gz && \
+    # Clean up
+    apk del .build-deps && \
+    rm -rf /var/cache/apk/* /tmp/* && \
+    chown -R tomcat:tomcat "${CATALINA_HOME}"
+
+# Copy WAR file from build stage
+COPY --from=builder --chown=tomcat:tomcat /app/target/*.war ${CATALINA_HOME}/webapps/ROOT.war
+
+# Switch to non-root user for security
+USER tomcat
+
+# Optimize JVM settings for containers
+ENV JAVA_OPTS="-Xms128m -Xmx256m -XX:+UseContainerSupport -XX:+UseG1GC -XX:MaxGCPauseMillis=100"
+
+EXPOSE 8080
+
+# Health check for container readiness
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD wget -nv -t1 --spider http://localhost:8080/ || exit 1
+
+CMD ["catalina.sh", "run"]
