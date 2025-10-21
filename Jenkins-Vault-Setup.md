@@ -23,52 +23,56 @@ You need the following components already running:
 vault auth enable approle
 ```
 
-### Create AppRole Credentials
-```bash
-vault write auth/approle/role/jenkins-role token_num_uses=0 secret_id_num_uses=0 policies="jenkins"
-```
-### Extract the AppRole ID at `auth/approle/role/jenkins-role/role-id`
-```bash
-vault read auth/approle/role/jenkins-role/role-id
-```
-### Reset the AppRole Secret ID
-```bash
-vault write -f auth/approle/role/jenkins-role/secret-id
-```
-### Enable Secrets
-```bash
-vault secrets enable -path=secrets kv
-```
-
 ### Create a Vault Policy for Jenkins
 
 ```bash
-vault policy write jenkins - <<EOF
-path "secret/creds/*" {
+cat > jenkins-policy.hcl <<'EOF'
+path "secret/data/jenkins/*" {
   capabilities = ["read"]
 }
 EOF
+vault policy write jenkins-policy jenkins-policy.hcl
 ```
 
-### Create an AppRole for Jenkins
-
+### Create AppRole Credentials
 ```bash
 vault write auth/approle/role/jenkins-role \
-  token_policies="jenkins" \
-  token_ttl=1h \
-  token_max_ttl=4h
+  token_ttl=30m \
+  token_max_ttl=60m \
+  secret_id_ttl=60m \
+  secret_id_num_uses=1 \
+  token_num_uses=1 \
+  policies=jenkins-policy
 ```
+### Extract the AppRole ID at `auth/approle/role/jenkins-role/role-id` 
 
-### Retrieve Role and Secret IDs
+### Get the App RoleID `auth/approle/role/jenkins-role/role-id ` and create one SecretID from `auth/approle/role/jenkins-role/secret-id`
 
+```
+vault read -field=role_id auth/approle/role/jenkins-role/role-id > role_id.txt
+vault write -f -format=json auth/approle/role/jenkins-role/secret-id | jq -r '.data.secret_id' > secret_id.txt
+```
+You now have two files stored at **`role_id.txt`** and **`secret_id.txt`**. Keep them safe.
+
+
+
+
+### Enable Secrets
 ```bash
-vault read auth/approle/role/jenkins-role/role-id
-vault write -f auth/approle/role/jenkins-role/secret-id
+vault secrets enable -path=secret kv-v2
+```
+Vault creates a mount point called **`secret`**.
+Inside it, every secret you store lives under:
+```bash
+secret/data/<your_secret_path>
+```
+### Store the SSH Private Key in Vault
+
+You’ll store the Jenkins agent private key here.
+```bash
+vault kv put secret/jenkins/agent_key private_key="$(cat /home/jenkins/.ssh/private_key)" 
 ```
 
-These values will be configured in Jenkins.
-
----
 
 ## 3. Store Secrets in Vault
 
