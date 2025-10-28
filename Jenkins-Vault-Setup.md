@@ -1,29 +1,50 @@
 # Jenkins Agents Integration with HashiCorp Vault
 
-This guide explains how to configure Jenkins and its agents to use HashiCorp Vault for secret management. It covers Vault setup, Jenkins configuration, and best practices for integrating both securely.
+This document provides a complete setup guide for integrating Jenkins agents with HashiCorp Vault for secret management. It includes Vault configuration, Jenkins host setup, and systemd service management.
 
 ---
 
 ## 1. Prerequisites
 
-You need the following components already running:
+You must have the following:
 
 * A **Kubernetes cluster** (kubeadm-based)
-* **Vault** installed (HA or single-node)
-* **Jenkins master** (controller)
+* **Vault** installed and running (HA or single-node)
+* **Jenkins master (controller)**
 * **Jenkins agents** (via SSH, Docker, or Kubernetes)
 
 ---
 
-## 2. Configure Vault for Jenkins
+## 2. Setup Overview
 
-### Enable AppRole Authentication
+1. Create a Vault AppRole for Jenkins with short TTLs and limited access.
+2. Store the AppRole credentials (`RoleID`, `SecretID`) securely on the Jenkins host.
+3. Configure and run `vault agent` as a systemd service on the Jenkins host.
+4. Use the Vault Agent to auto-authenticate and render an environment file containing a short-lived token.
+5. Configure Jenkins to use that environment file for Vault authentication.
+
+### Security Guidelines
+
+* Keep `role_id` and `secret_id` readable only by **vault** or **root**.
+* Set strict permissions for Vault token sink and environment files.
+* Use short TTLs and single-use `secret_id` if automation is available.
+* Test all configurations in a staging environment before production.
+
+---
+
+## 3. Configure Vault for Jenkins
+
+### A. Enable and Configure AppRole
+
+Run these commands on the Vault server or an authenticated admin machine.
+
+#### Enable AppRole Authentication
 
 ```bash
 vault auth enable approle
 ```
 
-### Create a Vault Policy for Jenkins
+#### Create a Jenkins Policy
 
 ```bash
 cat > jenkins-policy.hcl <<'EOF'
@@ -34,167 +55,179 @@ EOF
 vault policy write jenkins-policy jenkins-policy.hcl
 ```
 
-### Create AppRole Credentials
+#### Create the Jenkins AppRole
+
 ```bash
 vault write auth/approle/role/jenkins-role \
-  token_ttl=30m \
-  token_max_ttl=60m \
-  secret_id_ttl=60m \
-  secret_id_num_uses=1 \
-  token_num_uses=1 \
+  token_ttl=5h \
+  token_max_ttl=24h \
+  secret_id_ttl=2h \
+  secret_id_num_uses=150 \
+  token_num_uses=100 \
+  token_type=service \
   policies=jenkins-policy
 ```
-### Extract the AppRole ID at `auth/approle/role/jenkins-role/role-id` 
 
-### Get the App RoleID `auth/approle/role/jenkins-role/role-id ` and create one SecretID from `auth/approle/role/jenkins-role/secret-id`
+#### Retrieve AppRole Credentials
 
-```
+```bash
 vault read -field=role_id auth/approle/role/jenkins-role/role-id > role_id.txt
 vault write -f -format=json auth/approle/role/jenkins-role/secret-id | jq -r '.data.secret_id' > secret_id.txt
 ```
-You now have two files stored at **`role_id.txt`** and **`secret_id.txt`**. Keep them safe.
 
+Keep these files secure.
 
+---
 
+## 4. Jenkins Host Setup
 
-### Enable Secrets
+### A. Install Vault Agent
+
 ```bash
-vault secrets enable -path=secret kv-v2
-```
-Vault creates a mount point called **`secret`**.
-Inside it, every secret you store lives under:
-```bash
-secret/data/<your_secret_path>
-```
-### Store the SSH Private Key in Vault
-
-You’ll store the Jenkins agent private key here.
-```bash
-vault kv put secret/jenkins/agent_key private_key="$(cat /home/jenkins/.ssh/private_key)" 
+wget -O - https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(grep -oP '(?<=UBUNTU_CODENAME=).*' /etc/os-release || lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
+sudo apt update && sudo apt install vault -y
+vault -v
 ```
 
-
-## 3. Store Secrets in Vault
-
-Create secrets that Jenkins will use:
+### B. Create Vault Agent Directory and Secure Files
 
 ```bash
-vault kv put secret/jenkins/docker username=docker_user password=docker_pass
-vault kv put secret/jenkins/aws access_key=AKIAXXXX secret_key=xxxx
+sudo mkdir -p /var/lib/vault-agent/
+sudo chown -R vault:vault /var/lib/vault-agent/
+sudo chmod 750 /var/lib/vault-agent
+
+sudo cp /path/to/role_id.txt /var/lib/vault-agent/role_id
+sudo cp /path/to/secret_id.txt /var/lib/vault-agent/secret_id
+
+sudo chown vault:vault /var/lib/vault-agent/role_id /var/lib/vault-agent/secret_id
+sudo chmod 600 /var/lib/vault-agent/role_id /var/lib/vault-agent/secret_id
 ```
 
 ---
 
-## 4. Configure Jenkins to Use Vault
+## 5. Vault Agent Configuration
 
-### Install the Vault Plugin
+### A. Create Agent Configuration File
 
-1. Go to **Manage Jenkins → Plugins → Available**.
-2. Install **HashiCorp Vault Plugin**.
+Path: `/etc/vault/agent.hcl`
 
-### Add Vault Credentials
+```bash
+pid_file = "/run/vault/vault-agent.pid"
+listener "tcp" {
+  address = "127.0.0.1:8250"
+  tls_disable = true
+}
 
-1. Navigate to **Manage Jenkins → Credentials → System → Global credentials**.
-2. Add a new **Vault AppRole Credential**:
-
-   * Role ID: `<your-role-id>`
-   * Secret ID: `<your-secret-id>`
-   * Vault URL: `http://<vault-loadbalancer-ip>:8200`
-   * Skip TLS verification if Vault runs with `tlsDisable: true`.
-
-### Configure Vault in Jenkins
-
-1. Go to **Manage Jenkins → Configure System**.
-2. Find the **Vault Plugin** section.
-3. Enable **Use Vault Credential** and select your AppRole credential.
-4. Test the connection.
-
----
-
-## 5. Using Vault Secrets in Pipelines
-
-Example Jenkinsfile:
-
-```groovy
-pipeline {
-  agent any
-  environment {
-    DOCKER_USER = vault path: 'secret/data/jenkins/docker', key: 'username'
-    DOCKER_PASS = vault path: 'secret/data/jenkins/docker', key: 'password'
+auto_auth {
+  method "approle" {
+    mount_path = "auth/approle"
+    config = {
+      role_id_file_path = "/var/lib/vault-agent/role_id"
+      secret_id_file_path = "/var/lib/vault-agent/secret_id"
+      remove_secret_id_file_after_reading = false
+    }
   }
-  stages {
-    stage('Build') {
-      steps {
-        sh 'echo $DOCKER_USER'
-        sh 'docker login -u $DOCKER_USER -p $DOCKER_PASS'
-      }
+
+  sink "file" {
+    config = {
+      path = "/var/lib/vault-agent/.vault-token"
+      mode = 0644
     }
   }
 }
+
+template {
+  source      = "/var/lib/vault-agent/templates/token_env.tpl"
+  destination = "/var/lib/jenkins/vault/vault_env"
+  perms       = "0640"
+  command     = "systemctl try-restart jenkins.service"
+}
+
+vault {
+  address = "https://172.26.44.182:8200"
+  tls_skip_verify = true
+}
 ```
 
-Jenkins fetches the secrets dynamically at runtime from Vault.
-
----
-
-## 6. Jenkins Agents Integration
-
-### Option A: Agents Use Vault Through Controller *(Recommended)*
-
-The Jenkins controller fetches secrets from Vault and injects them into agent jobs during execution.
-
-### Option B: Agents Authenticate Directly to Vault
-
-Each agent connects to Vault using its own AppRole.
-
-#### Example Setup for Agents
+### B. Create Template File
 
 ```bash
-vault write auth/approle/login role_id=<role_id> secret_id=<secret_id> > token.json
-export VAULT_TOKEN=$(jq -r .auth.client_token token.json)
-vault kv get -field=password secret/jenkins/docker
+sudo tee /var/lib/vault-agent/templates/token_env.tpl > /dev/null <<'EOF'
+VAULT_TOKEN={{ with secret "auth/token/lookup-self" }}{{ .Data.id }}{{ end }}
+EOF
 ```
 
-Agents can fetch secrets directly for isolated or dynamic environments.
-
----
-
-## 7. Optional: Auto-Unseal Vault with Kubernetes
-
-To simplify restarts, configure Vault to auto-unseal using Kubernetes Secrets.
-
-```yaml
-server:
-  extraEnvironmentVars:
-    VAULT_UNSEAL_K8S_SECRET_NAME: vault-unseal
-```
-
-Vault will automatically unseal on pod restart.
-
----
-
-## 8. Validation
-
-Run:
+### C. Set Permissions
 
 ```bash
-kubectl get pods -n vault
-kubectl logs <vault-pod>
+sudo chown vault:vault /etc/vault/agent.hcl
+sudo chmod 640 /etc/vault/agent.hcl
+
+sudo chown -R vault:vault /var/lib/vault-agent
+sudo chmod 750 /var/lib/vault-agent
+sudo chmod 750 /var/lib/vault-agent/templates
+sudo chmod 640 /var/lib/vault-agent/templates/token_env.tpl
+
+sudo mkdir -p /var/lib/jenkins/vault
+sudo chown vault:jenkins /var/lib/jenkins/vault
+sudo chmod 770 /var/lib/jenkins/vault
 ```
-
-Ensure Vault pods are running and unsealed.
-
-In Jenkins, run a test pipeline to confirm secrets load from Vault.
 
 ---
 
-## 9. Summary
+## 6. Configure Vault Agent as a Systemd Service
 
-This setup:
+### Create Unit File
 
-* Keeps secrets centralized in Vault
-* Uses AppRole for secure Jenkins access
-* Supports dynamic secret retrieval
-* Reduces exposure of sensitive data in Jenkins
+Path: `/etc/systemd/system/vault-agent.service`
 
-You can extend this with dynamic database credentials, AWS IAM secrets, or PKI certificates as needed.
+```bash
+sudo tee /etc/systemd/system/vault-agent.service > /dev/null <<'EOF'
+[Unit]
+Description=Vault Agent (auto-auth for Jenkins)
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/vault agent -config=/etc/vault/agent.hcl
+PIDFile=/run/vault/vault-agent.pid
+Restart=on-failure
+User=vault
+Group=vault
+RuntimeDirectory=vault
+RuntimeDirectoryMode=0755
+ProtectSystem=full
+ProtectHome=read-only
+
+[Install]
+WantedBy=multi-user.target
+EOF
+```
+
+### Enable and Start Service
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable --now vault-agent.service
+sudo journalctl -u vault-agent -f --no-pager
+```
+
+### Verify
+
+Check token sink and environment file:
+
+```bash
+sudo ls -l /var/lib/vault-agent/.vault-token
+sudo cat /var/lib/vault-agent/.vault-token
+sudo cat /var/lib/jenkins/vault/vault_env
+```
+
+Ensure correct ownership:
+
+```bash
+sudo chown vault:jenkins /var/lib/jenkins/vault/vault_env
+sudo chmod 770 /var/lib/jenkins/vault
+```
+
+The Vault Agent automatically renews tokens and re-renders the environment file. The Jenkins service restarts whenever the token updates.
