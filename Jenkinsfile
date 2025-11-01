@@ -94,8 +94,24 @@ pipeline {
         
         stage('Build Docker Image') {
             steps {
-                // Build Docker image using environment variables
-                sh "docker build -t ${env.IMAGE_NAME}:${env.TAG} ."
+                script {
+                    echo "🚀 Building Docker image using BuildKit"
+                    
+                    sh '''
+                        # Enabling BuildKit for faster and efficient builds
+                        export DOCKER_BUILDKIT=1
+                        export BUILDKIT_PROGRESS=plain
+        
+                        # Clean up old dangling images to free space
+                        docker image prune -f || true
+        
+                        # Build the Docker image
+                        docker build \
+                            --progress=plain \
+                            -t ${env.IMAGE_NAME}:${env.TAG} \
+                            -f Dockerfile-new .
+                    '''
+                }
             }
         }
         
