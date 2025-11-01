@@ -32,8 +32,8 @@ RUN --mount=type=cache,target=/root/.m2 mvn clean package -DskipTests \
 FROM eclipse-temurin:17-jre-alpine
 
 # Install minimal Tomcat
-ENV TOMCAT_VERSION=9.0.93
-ENV TOMCAT_SHA512=3069924eb7041ccc0f2aeceb7d8626793a1a073a5b739a840d7974a18ebeb26cc3374cc5f4a3ffc74d3b019c0cb33e3d1fe96296e6663ac75a73c1171811726d
+ENV TOMCAT_VERSION=11.0.11
+ENV TOMCAT_SHA512=a26b2269530fd2fc834e9b1544962f6524cf87925de43b05ad050e66b5eaa76a4ad754a2c5fc4f851baf75a0ea1b0ed8f51082300393a4c35d8c2da0d7c535bd
 ENV CATALINA_HOME=/opt/tomcat
 ENV PATH="${CATALINA_HOME}/bin:${PATH}"
 
@@ -43,7 +43,7 @@ RUN addgroup -g 1000 -S tomcat && \
 
 # Install and configure Tomcat with size optimizations
 RUN apk add --no-cache --virtual .build-deps wget tar coreutils && \
-    wget -q -O tomcat.tar.gz "https://archive.apache.org/dist/tomcat/tomcat-9/v${TOMCAT_VERSION}/bin/apache-tomcat-${TOMCAT_VERSION}.tar.gz" && \
+    wget -q -O tomcat.tar.gz "https://archive.apache.org/dist/tomcat/tomcat-11/v${TOMCAT_VERSION}/bin/apache-tomcat-${TOMCAT_VERSION}.tar.gz" && \
     echo "${TOMCAT_SHA512}  tomcat.tar.gz" | sha512sum -c - && \
     mkdir -p "${CATALINA_HOME}" && \
     tar -xzf tomcat.tar.gz --strip-components=1 -C "${CATALINA_HOME}" && \
