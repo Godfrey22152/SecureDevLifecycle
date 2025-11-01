@@ -108,7 +108,7 @@ pipeline {
                         # Build the Docker image
                         docker build \
                             --progress=plain \
-                            -t ${env.IMAGE_NAME}:${env.TAG} \
+                            -t ${IMAGE_NAME}:${TAG} \
                             -f Dockerfile-new .
                     '''
                 }
