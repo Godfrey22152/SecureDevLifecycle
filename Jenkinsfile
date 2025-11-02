@@ -1,9 +1,6 @@
 pipeline {
     agent {label 'slave-1'}
-     options {
-        cleanWs()  // Jenkins wipes workspace automatically before and after build
-    }
-    
+         
     parameters {
         string(name: 'RELEASE_TYPE', description: 'Release type (e.g., prod, staging, dev)', defaultValue: 'dev')
     }
@@ -15,6 +12,13 @@ pipeline {
     }
     
     stages {
+        stage('Cleanup Workspace') {
+            steps {
+                cleanWs()
+                echo "Workspace cleaned before build"
+            }
+        }
+        
         stage('Git Checkout') {
             steps {
                 git branch: 'container-security', 
