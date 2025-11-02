@@ -104,17 +104,19 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    echo "🚀 Building Docker image"
+                    echo "🚀 Building Docker image using BuildKit"
                     
                     sh '''
-                        # Simply disable BuildKit and use legacy builder (most reliable)
-                        export DOCKER_BUILDKIT=0
-        
+                        # Enabling BuildKit for faster and efficient builds
+                        export DOCKER_BUILDKIT=1
+                        export BUILDKIT_PROGRESS=plain
+
                         # Clean up old dangling images to free space
                         docker image prune -f || true
-        
-                        # Build the Docker image using legacy builder
+
+                        # Build the Docker image
                         docker build \
+                            --progress=plain \
                             -t ${IMAGE_NAME}:${TAG} \
                             -f Dockerfile-new .
                     '''
