@@ -1,5 +1,8 @@
 pipeline {
     agent {label 'slave-1'}
+     options {
+        cleanWs()  // Jenkins wipes workspace automatically before and after build
+    }
     
     parameters {
         string(name: 'RELEASE_TYPE', description: 'Release type (e.g., prod, staging, dev)', defaultValue: 'dev')
@@ -7,7 +10,8 @@ pipeline {
     environment {
         IMAGE_NAME = 'ghcr.io/godfrey22152/trainbook-app'
         TRIVY_TIMEOUT = '15m'
-        GITHUB_CREDENTIALS_ID = 'git-cred' 
+        GITHUB_CREDENTIALS_ID = 'git-cred'
+        DOCKER_CONFIG = '/tmp/docker-config'  // <== global Docker config override to prevents Docker from caching tokens
     }
     
     stages {
@@ -84,6 +88,7 @@ pipeline {
                             usernameVariable: 'GITHUB_USER'
                         )]) {
                             sh '''
+                                mkdir -p "$DOCKER_CONFIG"
                                 echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_USER" --password-stdin
                             '''
                         }
@@ -295,6 +300,12 @@ pipeline {
                     }
                 }
             }
-        } 
+        }
+
+    post {
+        always {
+            echo "🧹 Cleaning up temporary Docker config directory..."
+            sh 'rm -rf /tmp/docker-config || true'
+        }
     } 
 }
