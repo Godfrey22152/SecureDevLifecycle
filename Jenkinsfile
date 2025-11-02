@@ -301,6 +301,7 @@ pipeline {
                 }
             }
         }
+    }
 
     post {
         always {
@@ -309,3 +310,5 @@ pipeline {
         }
     } 
 }
+    
+    
