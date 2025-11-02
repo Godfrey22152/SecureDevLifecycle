@@ -100,64 +100,21 @@ pipeline {
                 }
             }
         }
-                
+
         stage('Build Docker Image') {
             steps {
                 script {
-                    echo "🚀 Building Docker image using BuildKit"
+                    echo "🚀 Building Docker image"
                     
                     sh '''
-                        # Check if buildx is available, install if missing
-                        if ! docker buildx version >/dev/null 2>&1; then
-                            echo "⚠️  buildx not found, installing..."
-                            
-                            # Create plugin directory if it doesn't exist
-                            mkdir -p ~/.docker/cli-plugins
-                            
-                            # Detect architecture
-                            ARCH=$(uname -m)
-                            case $ARCH in
-                                x86_64)
-                                    BUILDX_ARCH="amd64"
-                                    ;;
-                                aarch64|arm64)
-                                    BUILDX_ARCH="arm64"
-                                    ;;
-                                *)
-                                    echo "❌ Unsupported architecture: $ARCH"
-                                    exit 1
-                                    ;;
-                            esac
-                            
-                            # Download and install buildx
-                            BUILDX_VERSION="v0.12.1"
-                            curl -SL "https://github.com/docker/buildx/releases/download/${BUILDX_VERSION}/buildx-${BUILDX_VERSION}.linux-${BUILDX_ARCH}" \
-                                -o ~/.docker/cli-plugins/docker-buildx
-                            
-                            chmod +x ~/.docker/cli-plugins/docker-buildx
-                            
-                            # Verify installation
-                            if docker buildx version >/dev/null 2>&1; then
-                                echo "✅ buildx installed successfully"
-                            else
-                                echo "❌ buildx installation failed"
-                                exit 1
-                            fi
-                        else
-                            echo "✅ buildx is already available"
-                            docker buildx version
-                        fi
-                        
-                        # Enable BuildKit for faster and efficient builds
-                        export DOCKER_BUILDKIT=1
-                        export BUILDKIT_PROGRESS=plain
+                        # Simply disable BuildKit and use legacy builder (most reliable)
+                        export DOCKER_BUILDKIT=0
         
                         # Clean up old dangling images to free space
                         docker image prune -f || true
         
-                        # Build the Docker image
+                        # Build the Docker image using legacy builder
                         docker build \
-                            --progress=plain \
                             -t ${IMAGE_NAME}:${TAG} \
                             -f Dockerfile-new .
                     '''
