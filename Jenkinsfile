@@ -205,7 +205,16 @@ pipeline {
         stage('Push Image to GitHub Container Registry (GHCR)') {
             steps {
                 echo 'CONGRATULATIONS No CRITICAL VULNERABILITIES WERE FOUND, PROCEEDING TO PUSH IMAGE'
-                sh "docker push ${env.IMAGE_NAME}:${env.TAG}"
+                withCredentials([usernamePassword(
+                    credentialsId: 'git-cred', 
+                    passwordVariable: 'GITHUB_TOKEN', 
+                    usernameVariable: 'GITHUB_USER'
+                )]) {
+                    sh '''
+                        echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_USER" --password-stdin
+                        docker push ${env.IMAGE_NAME}:${env.TAG}
+                    '''
+                } 
             }
         }
 
