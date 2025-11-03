@@ -108,12 +108,16 @@ pipeline {
                     
                     sh '''
                         # Enabling BuildKit for faster and efficient builds
-                        export DOCKER_CLI_PLUGINS_DIR=/home/jenkins/.docker/cli-plugins
+                        export HOME=/home/jenkins
+                        export PATH=/usr/bin:/bin
                         export DOCKER_BUILDKIT=1
                         export BUILDKIT_PROGRESS=plain
 
                         # Clean up old dangling images to free space
                         docker image prune -f || true
+                        echo "HOME=$HOME"
+                        echo "PATH=$PATH"
+                        which docker
 
                         # Build the Docker image
                         docker build \
