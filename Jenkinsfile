@@ -210,10 +210,10 @@ pipeline {
                     passwordVariable: 'GITHUB_TOKEN', 
                     usernameVariable: 'GITHUB_USER'
                 )]) {
-                    sh '''
-                        echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_USER" --password-stdin
+                    sh """
+                        echo "\$GITHUB_TOKEN" | docker login ghcr.io -u "\$GITHUB_USER" --password-stdin
                         docker push ${env.IMAGE_NAME}:${env.TAG}
-                    '''
+                    """
                 } 
             }
         }
