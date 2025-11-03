@@ -16,8 +16,18 @@ WARNING! Your password will be stored unencrypted in /home/$USER/.docker/config.
 Configure a credential helper to remove this warning.
 See https://docs.docker.com/engine/reference/commandline/login/#credential-stores
 ```
+When you verify this further at **`/home/$USER/.docker/config.json`** you see: 
 
-This means Docker saves your authentication token in base64 encoded text which is not a best practice. To secure these credentials, Docker recommends using a **credential helper**. The helper encrypts and retrieves credentials from a secure store, in this case **`[Pass](https://www.passwordstore.org)`**, a GPG-based password manager.
+```
+{
+        "auths": {
+                "ghcr.io": {WW91ci1Vc2VybmFtZTpZb3VyLVBhc3N3b3JkLW9yLVRva2Vu}
+        }
+}
+
+```
+
+This means Docker saves your authentication token in base64 encoded text which is not a best practice. To secure these credentials, Docker recommends using a **credential helper**. The helper encrypts and retrieves credentials from a secure store, in this case **[Pass](https://www.passwordstore.org)**, a GPG-based password manager.
 
 ---
 
@@ -140,6 +150,16 @@ Password Store
 └── docker-credential-helpers
     └── Z2hjci5pbw==
         └── Godfrey2025
+```
+
+When you check the **`/home/$USER/.docker/config.json`** again you will see:
+```
+{
+        "auths": {
+                "ghcr.io": {}
+        },
+        "credsStore": "pass"
+}
 ```
 
 passwords can also be removed:
