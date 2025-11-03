@@ -8,7 +8,7 @@ pipeline {
         IMAGE_NAME = 'ghcr.io/godfrey22152/trainbook-app'
         TRIVY_TIMEOUT = '15m'
         GITHUB_CREDENTIALS_ID = 'git-cred'
-        DOCKER_CONFIG = '/tmp/docker-config'  // <== global Docker config override to prevents Docker from caching tokens
+        //DOCKER_CONFIG = '/tmp/docker-config'  // <== global Docker config override to prevents Docker from caching tokens
     }
     
     stages {
@@ -92,7 +92,7 @@ pipeline {
                             usernameVariable: 'GITHUB_USER'
                         )]) {
                             sh '''
-                                mkdir -p "$DOCKER_CONFIG"
+                                # mkdir -p "$DOCKER_CONFIG"
                                 echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_USER" --password-stdin
                             '''
                         }
@@ -108,16 +108,11 @@ pipeline {
                     
                     sh '''
                         # Enabling BuildKit for faster and efficient builds
-                        export HOME=/home/jenkins
-                        export PATH=/usr/bin:/bin
                         export DOCKER_BUILDKIT=1
                         export BUILDKIT_PROGRESS=plain
 
                         # Clean up old dangling images to free space
                         docker image prune -f || true
-                        echo "HOME=$HOME"
-                        echo "PATH=$PATH"
-                        which docker
 
                         # Build the Docker image
                         docker build \
