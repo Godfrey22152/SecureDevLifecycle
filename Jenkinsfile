@@ -108,6 +108,7 @@ pipeline {
                     
                     sh '''
                         # Enabling BuildKit for faster and efficient builds
+                        export DOCKER_CLI_PLUGINS_DIR=/home/jenkins/.docker/cli-plugins
                         export DOCKER_BUILDKIT=1
                         export BUILDKIT_PROGRESS=plain
 
