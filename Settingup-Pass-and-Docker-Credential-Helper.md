@@ -18,16 +18,31 @@ See https://docs.docker.com/engine/reference/commandline/login/#credential-store
 ```
 When you verify this further at **`/home/$USER/.docker/config.json`** you see: 
 
-```
+If Using the Github Container Registry:
+
+```bash
 {
         "auths": {
-                "ghcr.io": {WW91ci1Vc2VybmFtZTpZb3VyLVBhc3N3b3JkLW9yLVRva2Vu}
+                "ghcr.io": {
+                        "auth": "WW91ci1Vc2VybmFtZTpZb3VyLVBhc3N3b3JkLW9yLVRva2Vu"
+                }
         }
 }
 
 ```
+Or if using DockerHub:
 
-This means Docker saves your authentication token in base64 encoded text which is not a best practice. To secure these credentials, Docker recommends using a **credential helper**. The helper encrypts and retrieves credentials from a secure store, in this case **[Pass](https://www.passwordstore.org)**, a GPG-based password manager.
+```bash
+{
+        "auths": {
+                "https://index.docker.io/v1/": {
+                        "auth": "WW91ciBQYXNzd29yZCBvciBQZXJzb25hbCBBY2Nlc3MgVG9rZW4="
+                }
+        }
+}
+```
+
+This means Docker saves your authentication token in base64 encoded text which is not a best practice. To secure these credentials, Docker recommends using a **credential helper**. The helper encrypts and retrieves credentials from a secure store, in this case **[Pass](https://www.passwordstore.org)**, a GPG-based password manager. You can checkout other helpers at **[credential helpers](https://docs.docker.com/engine/reference/commandline/login/#credential-stores)**
 
 ---
 
@@ -149,10 +164,10 @@ If successful, your credentials will now be encrypted securely:
 Password Store
 └── docker-credential-helpers
     └── Z2hjci5pbw==
-        └── Godfrey2025
+        └── Username2025
 ```
 
-When you check the **`/home/$USER/.docker/config.json`** again you will see:
+When you check the config file **`/home/$USER/.docker/config.json`** again you will see:
 ```
 {
         "auths": {
@@ -162,12 +177,56 @@ When you check the **`/home/$USER/.docker/config.json`** again you will see:
 }
 ```
 
-passwords can also be removed:
+## Step 7: Inspect the existing entry
+
+```bash
+pass ls docker-credential-helpers
+pass show docker-credential-helpers/Z2hjci5pbw==/Username2025
+```
+
+This shows what is stored now. **`Z2hjci5pbw==`** is base64 for **ghcr.io**.
+
+- **Ask the helper what it returns**
+
+```bash
+printf "ghcr.io" | docker-credential-pass get
+```
+Expected output in this format:
+```bash
+{"ServerURL":"ghcr.io","Username":"WW91ciBVc2VybmFtZQ==","Secret":"WW91ciBQYXNzd29yZCBvciBQZXJzb25hbCBBY2Nlc3MgVG9rZW4="}
+```
+
+## Step 8: You can also store credentials using the helper API (correct format)
+
+```bash
+printf '{"ServerURL":"ghcr.io","Username":"Your-Username","Secret":"Your-Secret"}' \
+  | docker-credential-pass store
+```
+
+- **Verify storage**
+
+```bash
+pass ls docker-credential-helpers
+pass show docker-credential-helpers/Z2hjci5pbw==
+docker-credential-pass list
+printf "ghcr.io" | docker-credential-pass get
+```
+
+Expected: `docker-credential-pass list` includes ghcr.io and `get` prints the JSON with ServerURL, Username, Secret.
+
+## Step 9: Test push from any environment example Jenkins
+
+```bash
+docker push ${env.CONTAINER_REGISTRY}/${env.USER_NAME}/${env.IMAGE_NAME}:${env.TAG}
+```
+Your credentials will no longer be stored unencrypted in **`/home/$USER/.docker/config.json`**
+
+## Step 10: passwords can also be removed:
 
 ```
-jenkins-agent@server ~ $ pass rm docker-credential-helpers/Z2hjci5pbw==/Godfrey2025
-rm: remove regular file ‘/home/jenkins-agent/.password-store/docker-credential-helpers/Z2hjci5pbw\=\=/Godfrey2025.gpg’? y
-removed ‘/home/jenkins-agent/.password-store/docker-credential-helpers/Z2hjci5pbw\=\=/Godfrey2025.gpg’
+jenkins-agent@server ~ $ pass rm docker-credential-helpers/Z2hjci5pbw==/Username2025
+rm: remove regular file ‘/home/jenkins-agent/.password-store/docker-credential-helpers/Z2hjci5pbw\=\=/Username.gpg’? y
+removed ‘/home/jenkins-agent/.password-store/docker-credential-helpers/Z2hjci5pbw\=\=/Username2025.gpg’
 ```
 
 ---
@@ -180,7 +239,119 @@ removed ‘/home/jenkins-agent/.password-store/docker-credential-helpers/Z2hjci5
 
 ---
 
+## Troubleshooting Notes:
+
 ### Notes for Jenkins
 
 * Always ensure `pass` and `docker-credential-pass` are installed on every agent that executes Docker commands.
 * If using ephemeral agents, consider automating GPG key import and pass initialization within the agent startup script.
+
+---
+
+### GPG Passphrase Lock 
+
+You will frequently be asked for the passphrase during Jenkins builds or after idle time, hence causing authentication errors like this one: **`unauthorized: unauthenticated: User cannot be authenticated with the token provided.`**.
+Your **GPG key used by `pass` is locked**, and Docker cannot read credentials until you manually unlock it by entering your **GPG passphrase**. Once unlocked, everything works until the GPG agent times out again.
+
+Here’s how to fix it permanently.
+
+---
+
+#### **1. Set GPG agent to cache your passphrase longer**
+
+Edit or create this file:
+
+```bash
+nano ~/.gnupg/gpg-agent.conf
+```
+
+Add these lines:
+
+```
+default-cache-ttl 86400
+max-cache-ttl 31536000
+```
+
+* `default-cache-ttl 86400` keeps it unlocked for 24 hours. 
+* `max-cache-ttl 31536000` allows up to one year if the agent stays active.
+* **NB: Modify the way you want.**
+
+Then reload the agent:
+
+```bash
+gpgconf --kill gpg-agent
+gpgconf --launch gpg-agent
+```
+
+---
+
+#### **2. Unlock once manually**
+
+Run:
+
+```bash
+pass show docker-credential-helpers/Z2hjci5pbw==/Username2025
+```
+
+Enter your passphrase one last time.
+This unlocks the key and caches it in memory according to the timeout you set above and you are good to go.
+
+---
+
+#### **3. To make sure `pinentry` is non-interactive**
+
+If Jenkins or your automation runs without a TTY, you must stop GPG from prompting for the passphrase.
+
+Edit or create:
+
+```bash
+nano ~/.gnupg/gpg.conf
+```
+
+Add:
+
+```
+use-agent
+```
+
+Then edit:
+
+```bash
+nano ~/.gnupg/gpg-agent.conf
+```
+
+Add (or keep) these lines:
+
+```
+pinentry-program /usr/bin/pinentry-curses
+allow-preset-passphrase
+```
+
+If Jenkins runs under a headless account, you can pre-cache the passphrase using:
+
+```bash
+echo "PASSPHRASE" | gpg-preset-passphrase --preset <KEYGRIP>
+```
+
+Find `<KEYGRIP>` with:
+
+```bash
+gpg --list-secret-keys --with-keygrip
+```
+
+---
+
+#### **4. Test**
+
+After applying these settings:
+
+* Restart the GPG agent (`gpgconf --kill gpg-agent`).
+* Run `pass show docker-credential-helpers/Z2hjci5pbw==/Username2025` once manually.
+* Then retry `docker push`.
+
+You should no longer be asked for the passphrase during Jenkins builds or after idle time.
+
+---
+**Thanks for your time, hope this was informative, like, share, and Star the Repo**
+
+
