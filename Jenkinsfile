@@ -212,7 +212,10 @@ pipeline {
         stage('Sign Container Image with Cosign') {
             steps {
                 script {
-                    withVault(configuration: [vaultCredentialId: 'vault-agent-token', vaultUrl: 'https://vault.com:8200']) {
+                    withVault([ 
+                        vaultSecrets: [], 
+                        configuration: [vaultCredentialId: 'vault-agent-token', vaultUrl: 'https://vault.com:8200'] 
+                    ]) {
                         sh '''
                             set -e  # Exit immediately on error
         
@@ -240,7 +243,10 @@ pipeline {
         stage('Verify Cosign Signature') {
             steps {
                 script {
-                    withVault(configuration: [vaultCredentialId: 'vault-agent-token', vaultUrl: 'https://vault.com:8200']) {
+                    withVault([ 
+                        vaultSecrets: [], 
+                        configuration: [vaultCredentialId: 'vault-agent-token', vaultUrl: 'https://vault.com:8200'] 
+                    ]) {
                         sh '''
                             set -e  # Exit immediately on error
                             
