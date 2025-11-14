@@ -212,9 +212,8 @@ pipeline {
         stage('Sign Container Image with Cosign') {
             steps {
                 script {
-                    withVault([envFromVault: true, vaultCredentialId: 'vault-agent-token']) {
+                    withVault(configuration: [vaultCredentialId: 'vault-agent-token', vaultUrl: 'https://vault.com:8200']) {
                         sh '''
-                            set +x  # disables command echoing
                             set -e  # Exit immediately on error
         
                             echo "[Cosign] Version Check"
@@ -241,25 +240,20 @@ pipeline {
         stage('Verify Cosign Signature') {
             steps {
                 script {
-                    withVault([
-                        vaultSecrets: [
-                            [path: 'secret/jenkins/cosign-public-key-file', secretValues: [[envVar: 'COSIGN_PUB_KEY_B64', vaultKey: 'file_b64']]]
-                        ]
-                    ]) {
+                    withVault(configuration: [vaultCredentialId: 'vault-agent-token', vaultUrl: 'https://vault.com:8200']) {
                         sh '''
-                            set +x  # disables command echoing
                             set -e  # Exit immediately on error
                             
                             echo "[Cosign] Version Check"
                             cosign version
                             
                             echo "[Cosign] Resolving digest for ${IMAGE_NAME}:${TAG} using crane..."
-                            PUB_KEY=$(echo "$COSIGN_PUB_KEY_B64" | base64 -d)
                             DIGEST=$(crane digest "${IMAGE_NAME}:${TAG}")
                             IMAGE_REF="${IMAGE_NAME}@${DIGEST}"
                             
-                            echo "$PUB_KEY" | cosign verify \
-                                --key - \
+                            echo "[Cosign] Verifying $IMAGE_REF"
+                            cosign verify \
+                                --key "hashivault://cosign" \
                                 "$IMAGE_REF"
         
                             echo "✅ Verification succeeded: $IMAGE_REF"
