@@ -212,24 +212,33 @@ pipeline {
         stage('Sign Container Image with Cosign') {
             steps {
                 script {
-                    echo "[Cosign] Version Check"
-                    sh 'cosign version'
-                    
-                    withCredentials([
-                        file(credentialsId: 'cosign-private-key-file', variable: 'COSIGN_KEY_FILE'),
-                        string(credentialsId: 'cosign-password', variable: 'COSIGN_PASSWORD')
+                    withVault([
+                        vaultSecrets: [
+                            [path: 'secret/jenkins/cosign-private-key-file', secretValues: [[envVar: 'COSIGN_PRIV_KEY_B64', vaultKey: 'file_b64']]],
+                            [path: 'secret/jenkins/cosign-password',         secretValues: [[envVar: 'COSIGN_PASSWORD',     vaultKey: 'value']]]
+                        ]
                     ]) {
                         sh '''
+                            set +x  # disables command echoing
                             set -e  # Exit immediately on error
-                            echo "[Cosign] Signing ${IMAGE_NAME}:${TAG}"
 
+                            echo "[Cosign] Version Check"
+                            cosign version
+
+                            echo "[Cosign] Signing ${IMAGE_NAME}:${TAG}"
+                            
+                            # Decode Cosign PEM Key in memory and feed cosign via stdin
+                            PRIV_KEY=$(echo "$COSIGN_PRIV_KEY_B64" | base64 -d)
+                            
                             # Sign image with digest instead of image tag 
-                            DIGEST=\$(crane digest "${IMAGE_NAME}:${TAG}")
-                            echo "$COSIGN_PASSWORD" | cosign sign \
-                                --key "$COSIGN_KEY_FILE" \
+                            DIGEST=$(crane digest "${IMAGE_NAME}:${TAG}")
+
+                            echo "$PRIV_KEY" | COSIGN_PASSWORD="$COSIGN_PASSWORD" \
+                                cosign sign \
+                                --key - \
                                 --yes \
                                 --recursive \
-                                "${IMAGE_NAME}@\$DIGEST"
+                                "${IMAGE_NAME}@${DIGEST}"
         
                             echo "✅ Signed Image with Digest: ${IMAGE_NAME}@\$DIGEST"
                         '''
@@ -241,19 +250,25 @@ pipeline {
         stage('Verify Cosign Signature') {
             steps {
                 script {
-                    echo "[Cosign] Version Check"
-                    sh 'cosign version'
-        
-                    withCredentials([file(credentialsId: 'cosign-public-key-file', variable: 'COSIGN_KEY_FILE')]) {
+                    withVault([
+                        vaultSecrets: [
+                            [path: 'secret/jenkins/cosign-public-key-file', secretValues: [[envVar: 'COSIGN_PUB_KEY_B64', vaultKey: 'file_b64']]]
+                        ]
+                    ]) {
                         sh '''
-                            set -e
+                            set +x  # disables command echoing
+                            set -e  # Exit immediately on error
+                            
+                            echo "[Cosign] Version Check"
+                            cosign version
+                            
                             echo "[Cosign] Resolving digest for ${IMAGE_NAME}:${TAG} using crane..."
+                            PUB_KEY=$(echo "$COSIGN_PUB_KEY_B64" | base64 -d)
                             DIGEST=$(crane digest "${IMAGE_NAME}:${TAG}")
                             IMAGE_REF="${IMAGE_NAME}@${DIGEST}"
-
-                            echo "[Cosign] Verifying $IMAGE_REF"
-                            cosign verify \
-                                --key "$COSIGN_KEY_FILE" \
+                            
+                            echo "$PUB_KEY" | cosign verify \
+                                --key - \
                                 "$IMAGE_REF"
         
                             echo "✅ Verification succeeded: $IMAGE_REF"
