@@ -212,36 +212,27 @@ pipeline {
         stage('Sign Container Image with Cosign') {
             steps {
                 script {
-                    withVault([
-                        vaultSecrets: [
-                            [path: 'secret/jenkins/cosign-private-key-file', secretValues: [[envVar: 'COSIGN_PRIV_KEY_B64', vaultKey: 'file_b64']]],
-                            [path: 'secret/jenkins/cosign-password',         secretValues: [[envVar: 'COSIGN_PASSWORD',     vaultKey: 'cosign-password']]]
-                        ]
-                    ]) {
-                        sh '''
-                            set +x  # disables command echoing
-                            set -e  # Exit immediately on error
-
-                            echo "[Cosign] Version Check"
-                            cosign version
-
-                            echo "[Cosign] Signing ${IMAGE_NAME}:${TAG}"
-                            
-                            # Decode Cosign PEM Key in memory and feed cosign via stdin
-                            PRIV_KEY=$(echo "$COSIGN_PRIV_KEY_B64" | base64 -d)
-                            
-                            # Sign image with digest instead of image tag 
-                            DIGEST=$(crane digest "${IMAGE_NAME}:${TAG}")
-
-                            echo "$PRIV_KEY" | COSIGN_PASSWORD="$COSIGN_PASSWORD" \
-                                cosign sign \
-                                --key - \
-                                --yes \
-                                "${IMAGE_NAME}@${DIGEST}"
-        
-                            echo "✅ Signed Image with Digest: ${IMAGE_NAME}@\$DIGEST"
-                        '''
-                    }
+                    
+                    sh '''
+                        set +x  # disables command echoing
+                        set -e  # Exit immediately on error
+    
+                        echo "[Cosign] Version Check"
+                        cosign version
+    
+                        echo "[Cosign] Signing ${IMAGE_NAME}:${TAG}"
+                        
+                        # Sign image with digest instead of image tag 
+                        DIGEST=$(crane digest "${IMAGE_NAME}:${TAG}")
+    
+                        cosign sign \
+                            --key "hashivault://cosign" \
+                            --yes \
+                            --recursive \
+                            "${IMAGE_NAME}@${DIGEST}"
+    
+                        echo "✅ Signed Image with Digest: ${IMAGE_NAME}@\$DIGEST"
+                    '''
                 }
             }
         }
