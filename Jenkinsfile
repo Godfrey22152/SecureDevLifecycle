@@ -215,7 +215,7 @@ pipeline {
                     withVault([
                         vaultSecrets: [
                             [path: 'secret/jenkins/cosign-private-key-file', secretValues: [[envVar: 'COSIGN_PRIV_KEY_B64', vaultKey: 'file_b64']]],
-                            [path: 'secret/jenkins/cosign-password',         secretValues: [[envVar: 'COSIGN_PASSWORD',     vaultKey: 'value']]]
+                            [path: 'secret/jenkins/cosign-password',         secretValues: [[envVar: 'COSIGN_PASSWORD',     vaultKey: 'cosign-password']]]
                         ]
                     ]) {
                         sh '''
