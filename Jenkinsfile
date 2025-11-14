@@ -237,7 +237,6 @@ pipeline {
                                 cosign sign \
                                 --key - \
                                 --yes \
-                                --recursive \
                                 "${IMAGE_NAME}@${DIGEST}"
         
                             echo "✅ Signed Image with Digest: ${IMAGE_NAME}@\$DIGEST"
