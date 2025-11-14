@@ -212,27 +212,28 @@ pipeline {
         stage('Sign Container Image with Cosign') {
             steps {
                 script {
-                    
-                    sh '''
-                        set +x  # disables command echoing
-                        set -e  # Exit immediately on error
-    
-                        echo "[Cosign] Version Check"
-                        cosign version
-    
-                        echo "[Cosign] Signing ${IMAGE_NAME}:${TAG}"
-                        
-                        # Sign image with digest instead of image tag 
-                        DIGEST=$(crane digest "${IMAGE_NAME}:${TAG}")
-    
-                        cosign sign \
-                            --key "hashivault://cosign" \
-                            --yes \
-                            --recursive \
-                            "${IMAGE_NAME}@${DIGEST}"
-    
-                        echo "✅ Signed Image with Digest: ${IMAGE_NAME}@\$DIGEST"
-                    '''
+                    withVault([envFromVault: true, vaultCredentialId: 'vault-agent-token']) {
+                        sh '''
+                            set +x  # disables command echoing
+                            set -e  # Exit immediately on error
+        
+                            echo "[Cosign] Version Check"
+                            cosign version
+        
+                            echo "[Cosign] Signing ${IMAGE_NAME}:${TAG}"
+                            
+                            # Sign image with digest instead of image tag 
+                            DIGEST=$(crane digest "${IMAGE_NAME}:${TAG}")
+        
+                            cosign sign \
+                                --key "hashivault://cosign" \
+                                --yes \
+                                --recursive \
+                                "${IMAGE_NAME}@${DIGEST}"
+        
+                            echo "✅ Signed Image with Digest: ${IMAGE_NAME}@\$DIGEST"
+                        '''
+                    }
                 }
             }
         }
