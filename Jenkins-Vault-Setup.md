@@ -44,18 +44,96 @@ Run these commands on the Vault server or an authenticated admin machine.
 vault auth enable approle
 ```
 
-#### Create a Jenkins Policy
+### B. Enable Transit
+Hashicorp Vault keys can be used in **[cosign](https://docs.sigstore.dev/cosign/signing/signing_with_containers/)** for signing and verification. The URI format for Hashicorp Vault KMS is: `hashivault://$keyname`
+This provider requires that the standard Vault environment variables (`$VAULT_ADDR`, `$VAULT_TOKEN`) are set correctly. This provider also requires that the `transit` secret engine is enabled.
+
+- 1. Run these on the Vault server:
+```bash
+vault secrets enable transit
+```
+
+Check if it is already enabled:
+```bash
+vault secrets list
+```
+
+- 2. Create the key
+Create a signing key named `cosign`:
+```bash
+vault write -f transit/keys/cosign type=ecdsa-p256
+```
+
+List and View the key:
+```bash
+# List all transit keys
+vault list transit/keys
+
+# Read the cosign key details
+vault read transit/keys/cosign
+```
+You now have the required key name: **cosign**
+
+
+### C. Create a Jenkins Policy with KV secrets access and Cosign Transit Engine Access 
 
 ```bash
 cat > jenkins-policy.hcl <<'EOF'
+
+## KV secrets access
 path "secret/data/jenkins/*" {
   capabilities = ["read"]
 }
+
+## Cosign Transit Engine Access
+
+# Allow reading the transit key metadata and public key
+path "transit/keys/cosign" {
+  capabilities = ["read", "list"]
+}
+
+# Allow signing operations
+path "transit/sign/cosign" {
+  capabilities = ["create", "update"]
+}
+
+path "transit/sign/cosign/*" {
+  capabilities = ["create", "update"]
+}
+
+# Allow verification operations
+path "transit/verify/cosign" {
+  capabilities = ["create", "update"]
+}
+
+path "transit/verify/cosign/*" {
+  capabilities = ["create", "update"]
+}
+
+# Allow HMAC operations (optional)
+path "transit/hmac/cosign" {
+  capabilities = ["create", "update"]
+}
+
+path "transit/hmac/cosign/*" {
+  capabilities = ["create", "update"]
+}
+
+# CRITICAL: Allow export of public key (required for cosign)
+path "transit/export/signing-key/cosign" {
+  capabilities = ["read"]
+}
+
+# Allow reading transit mount info
+path "transit/" {
+  capabilities = ["read", "list"]
+}
 EOF
+
 vault policy write jenkins-policy jenkins-policy.hcl
 ```
 
-#### Create the Jenkins AppRole
+### D. Create the Jenkins AppRole with the jenkins-policy attached which has the KV secrets & Transit Permissions
 
 ```bash
 vault write auth/approle/role/jenkins-role \
@@ -68,7 +146,7 @@ vault write auth/approle/role/jenkins-role \
   policies=jenkins-policy
 ```
 
-#### Retrieve AppRole Credentials
+### E. Retrieve AppRole Credentials
 
 ```bash
 vault read -field=role_id auth/approle/role/jenkins-role/role-id > role_id.txt
@@ -170,7 +248,7 @@ sudo chmod 750 /var/lib/vault-agent/templates
 sudo chmod 640 /var/lib/vault-agent/templates/token_env.tpl
 
 sudo mkdir -p /var/lib/jenkins/vault
-sudo chown vault:jenkins /var/lib/jenkins/vault
+sudo chown -R vault:jenkins /var/lib/jenkins/vault
 sudo chmod 770 /var/lib/jenkins/vault
 ```
 
