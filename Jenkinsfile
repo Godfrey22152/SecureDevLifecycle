@@ -263,15 +263,15 @@ pipeline {
                             cosign version
                             
                             echo "[Cosign] Resolving digest for ${IMAGE_NAME}:${TAG} using crane..."
-                            DIGEST=$(crane digest "${IMAGE_NAME}:${TAG}")
-                            IMAGE_REF="${IMAGE_NAME}@${DIGEST}"
+                            DIGEST=\$(crane digest "${IMAGE_NAME}:${TAG}")
+                            IMAGE_REF="${IMAGE_NAME}@\${DIGEST}"
                             
-                            echo "[Cosign] Verifying $IMAGE_REF"
+                            echo "[Cosign] Verifying \$IMAGE_REF"
                             cosign verify \
                                 --key "hashivault://cosign" \
-                                "$IMAGE_REF"
+                                "\$IMAGE_REF"
         
-                            echo "✅ Verification succeeded: $IMAGE_REF"
+                            echo "✅ Verification succeeded: \$IMAGE_REF"
                         """
                     }
                 }
