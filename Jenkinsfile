@@ -218,7 +218,7 @@ pipeline {
                     ]) {
                         // Capture the VAULT_TOKEN from the withVault context
                         def vaultToken = env.VAULT_TOKEN
-                        sh '''                            
+                        sh """                            
                             set -e  # Exit immediately on error
                             
                             # Export Vault environment variables from Vault Agent
@@ -231,16 +231,16 @@ pipeline {
                             echo "[Cosign] Signing ${IMAGE_NAME}:${TAG}"
                             
                             # Sign image with digest instead of image tag 
-                            DIGEST=$(crane digest "${IMAGE_NAME}:${TAG}")
+                            DIGEST=\$(crane digest "${IMAGE_NAME}:${TAG}")
         
                             cosign sign \
                                 --key "hashivault://cosign" \
                                 --yes \
                                 --recursive \
-                                "${IMAGE_NAME}@${DIGEST}"
+                                "${IMAGE_NAME}@\${DIGEST}"
         
                             echo "✅ Signed Image with Digest: ${IMAGE_NAME}@\$DIGEST"
-                        '''
+                        """
                     }
                 }
             }
