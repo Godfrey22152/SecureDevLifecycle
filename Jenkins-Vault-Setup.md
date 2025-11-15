@@ -48,7 +48,7 @@ vault auth enable approle
 Hashicorp Vault keys can be used in **[cosign](https://docs.sigstore.dev/cosign/signing/signing_with_containers/)** for signing and verification. The URI format for Hashicorp Vault KMS is: `hashivault://$keyname`
 This provider requires that the standard Vault environment variables (`$VAULT_ADDR`, `$VAULT_TOKEN`) are set correctly. This provider also requires that the `transit` secret engine is enabled.
 
-- 1. Run these on the Vault server:
+#### 1. Run these on the Vault server:
 ```bash
 vault secrets enable transit
 ```
@@ -58,13 +58,13 @@ Check if it is already enabled:
 vault secrets list
 ```
 
-- 2. Create the key
+#### 2. Create the key
 Create a signing key named `cosign`:
 ```bash
 vault write -f transit/keys/cosign type=ecdsa-p256
 ```
 
-List and View the key:
+#### 3. List and View the key:
 ```bash
 # List all transit keys
 vault list transit/keys
@@ -86,7 +86,6 @@ path "secret/data/jenkins/*" {
 }
 
 ## Cosign Transit Engine Access
-
 # Allow reading the transit key metadata and public key
 path "transit/keys/cosign" {
   capabilities = ["read", "list"]
