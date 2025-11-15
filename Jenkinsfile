@@ -262,7 +262,6 @@ pipeline {
     
                         echo "✅ Verification succeeded: $IMAGE_REF"
                     '''
-                    }
                 }
             }
         }
