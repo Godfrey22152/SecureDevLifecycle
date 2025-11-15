@@ -239,7 +239,7 @@ pipeline {
                                 --recursive \
                                 "${IMAGE_NAME}@\${DIGEST}"
         
-                            echo "✅ Signed Image with Digest: ${IMAGE_NAME}@\$DIGEST"
+                            echo "✅ Signed Image with Digest: ${IMAGE_NAME}@\${DIGEST}"
                         """
                     }
                 }
