@@ -218,7 +218,7 @@ pipeline {
                         
                         # Set ALL Vault variables explicitly
                         export VAULT_ADDR="https://172.26.44.182:8200"
-                        export VAULT_TOKEN="hvs.E6uWi8BivbAaZAY077MEB8k2"
+                        export VAULT_TOKEN="hvs.CAESIMnTGm8aVqxKWVjNO227X5dsFKsz1ZOYVnO2ncblQmAcGh4KHGh2cy5PN2pYRnNKQ1B4RHNsR0plMjVoTVM2Q0c"
                         export TRANSIT_SECRET_ENGINE_PATH="transit"
                         export VAULT_SKIP_VERIFY="true"  # Skip TLS verification
                         
