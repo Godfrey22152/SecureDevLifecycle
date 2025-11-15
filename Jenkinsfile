@@ -213,21 +213,27 @@ pipeline {
         stage('Sign Container Image with Cosign') {
             steps {
                 script {
-                    withCredentials([
-                        file(credentialsId: 'vault-agent-token', variable: 'VAULT_TOKEN_FILE')
+                    withVault([
+                        vaultSecrets: [],
+                        configuration: [
+                            vaultCredentialId: 'vault-agent-token', 
+                            vaultUrl: 'https://172.26.44.182:8200'
+                        ]
                     ]) {
+                        // Capture the VAULT_TOKEN from the withVault context
+                        def vaultToken = env.VAULT_TOKEN
                         sh """                            
                             set -e  # Exit immediately on error
                             
                             # Set ALL Vault variables explicitly
                             export VAULT_ADDR="https://172.26.44.182:8200"
-                            export VAULT_TOKEN=\$(cat \$VAULT_TOKEN_FILE)
+                            export VAULT_TOKEN="${vaultToken}"
                             export TRANSIT_SECRET_ENGINE_PATH="transit"
                             
                             # Debug output
                             echo "[Debug] VAULT_ADDR=\$VAULT_ADDR"
                             echo "[Debug] TRANSIT_PATH=\$TRANSIT_SECRET_ENGINE_PATH"
-                            echo "[Debug] Token loaded from file: \${VAULT_TOKEN:+YES}"
+                            echo "[Debug] Token is set: \${VAULT_TOKEN:+YES}"
                             
                             echo "[Cosign] Version Check"
                             cosign version
