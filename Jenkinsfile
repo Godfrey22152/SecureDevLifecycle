@@ -225,6 +225,7 @@ pipeline {
                             # Export Vault environment variables from Vault Agent
                             export VAULT_ADDR="https://vault.com:8200"
                             export VAULT_TOKEN="${vaultToken}"
+                            export VAULT_SKIP_VERIFY="true"  # Skip TLS verification
                             
                             echo "[Cosign] Version Check"
                             cosign version
@@ -259,6 +260,7 @@ pipeline {
                             # Export Vault environment variables from Vault Agent
                             export VAULT_ADDR="https://vault.com:8200"
                             export VAULT_TOKEN="${VAULT_TOKEN}"
+                            export VAULT_SKIP_VERIFY="true"  # Skip TLS verification
                                                     
                             echo "[Cosign] Version Check"
                             cosign version
