@@ -212,29 +212,34 @@ pipeline {
         stage('Sign Container Image with Cosign') {
             steps {
                 script {
-                    sh '''                            
-                        set -e  # Exit immediately on error
-                        
-                        # Export Vault environment variables from Vault Agent
-                        export VAULT_ADDR="https://vault.com:8200"
-                        export VAULT_TOKEN=$(cat /var/lib/jenkins/vault/token)
-                        
-                        echo "[Cosign] Version Check"
-                        cosign version
-    
-                        echo "[Cosign] Signing ${IMAGE_NAME}:${TAG}"
-                        
-                        # Sign image with digest instead of image tag 
-                        DIGEST=$(crane digest "${IMAGE_NAME}:${TAG}")
-    
-                        cosign sign \
-                            --key "hashivault://cosign" \
-                            --yes \
-                            --recursive \
-                            "${IMAGE_NAME}@${DIGEST}"
-    
-                        echo "✅ Signed Image with Digest: ${IMAGE_NAME}@\$DIGEST"
-                    '''
+                    withVault([
+                        vaultSecrets: [],
+                        configuration: [vaultCredentialId: 'vault-agent-token', vaultUrl: 'https://vault.com:8200']
+                    ]) {
+                        sh '''                            
+                            set -e  # Exit immediately on error
+                            
+                            # Export Vault environment variables from Vault Agent
+                            export VAULT_ADDR="https://vault.com:8200"
+                            export VAULT_TOKEN="$VAULT_TOKEN"
+                            
+                            echo "[Cosign] Version Check"
+                            cosign version
+        
+                            echo "[Cosign] Signing ${IMAGE_NAME}:${TAG}"
+                            
+                            # Sign image with digest instead of image tag 
+                            DIGEST=$(crane digest "${IMAGE_NAME}:${TAG}")
+        
+                            cosign sign \
+                                --key "hashivault://cosign" \
+                                --yes \
+                                --recursive \
+                                "${IMAGE_NAME}@${DIGEST}"
+        
+                            echo "✅ Signed Image with Digest: ${IMAGE_NAME}@\$DIGEST"
+                        '''
+                    }
                 }
             }
         }
@@ -242,26 +247,32 @@ pipeline {
         stage('Verify Cosign Signature') {
             steps {
                 script {
-                    sh '''
-                        set -e  # Exit immediately on error
-                        
-                        # Export Vault environment variables from Vault Agent
-                        export VAULT_ADDR="https://vault.com:8200"
-                                                
-                        echo "[Cosign] Version Check"
-                        cosign version
-                        
-                        echo "[Cosign] Resolving digest for ${IMAGE_NAME}:${TAG} using crane..."
-                        DIGEST=$(crane digest "${IMAGE_NAME}:${TAG}")
-                        IMAGE_REF="${IMAGE_NAME}@${DIGEST}"
-                        
-                        echo "[Cosign] Verifying $IMAGE_REF"
-                        cosign verify \
-                            --key "hashivault://cosign" \
-                            "$IMAGE_REF"
-    
-                        echo "✅ Verification succeeded: $IMAGE_REF"
-                    '''
+                    withVault([
+                        vaultSecrets: [],
+                        configuration: [vaultCredentialId: 'vault-agent-token', vaultUrl: 'https://vault.com:8200']
+                    ]) {
+                        sh '''
+                            set -e  # Exit immediately on error
+                            
+                            # Export Vault environment variables from Vault Agent
+                            export VAULT_ADDR="https://vault.com:8200"
+                            export VAULT_TOKEN="$VAULT_TOKEN"
+                                                    
+                            echo "[Cosign] Version Check"
+                            cosign version
+                            
+                            echo "[Cosign] Resolving digest for ${IMAGE_NAME}:${TAG} using crane..."
+                            DIGEST=$(crane digest "${IMAGE_NAME}:${TAG}")
+                            IMAGE_REF="${IMAGE_NAME}@${DIGEST}"
+                            
+                            echo "[Cosign] Verifying $IMAGE_REF"
+                            cosign verify \
+                                --key "hashivault://cosign" \
+                                "$IMAGE_REF"
+        
+                            echo "✅ Verification succeeded: $IMAGE_REF"
+                        '''
+                    }
                 }
             }
         }
