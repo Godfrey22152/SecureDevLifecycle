@@ -229,6 +229,7 @@ pipeline {
                             export VAULT_ADDR="https://172.26.44.182:8200"
                             export VAULT_TOKEN="${vaultToken}"
                             export TRANSIT_SECRET_ENGINE_PATH="transit"
+                            export VAULT_SKIP_VERIFY="true"  # Skip TLS verification
                             
                             # Debug output
                             echo "[Debug] VAULT_ADDR=\$VAULT_ADDR"
