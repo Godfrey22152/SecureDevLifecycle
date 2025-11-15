@@ -249,17 +249,15 @@ pipeline {
         stage('Verify Cosign Signature') {
             steps {
                 script {
-                    withVault([
-                        vaultSecrets: [],
-                        configuration: [vaultCredentialId: 'vault-agent-token', vaultUrl: 'https://vault.com:8200']
+                    withCredentials([
+                        string(credentialsId: 'vault-agent-token', variable: 'VAULT_TOKEN')
                     ]) {
-                        def vaultToken = env.VAULT_TOKEN
-                        sh '''
+                        sh """
                             set -e  # Exit immediately on error
                             
                             # Export Vault environment variables from Vault Agent
                             export VAULT_ADDR="https://vault.com:8200"
-                            export VAULT_TOKEN="${vaultToken}"
+                            export VAULT_TOKEN="${VAULT_TOKEN}"
                                                     
                             echo "[Cosign] Version Check"
                             cosign version
@@ -274,7 +272,7 @@ pipeline {
                                 "$IMAGE_REF"
         
                             echo "✅ Verification succeeded: $IMAGE_REF"
-                        '''
+                        """
                     }
                 }
             }
