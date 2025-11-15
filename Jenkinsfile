@@ -214,20 +214,20 @@ pipeline {
             steps {
                 script {
                     withCredentials([
-                        string(credentialsId: 'vault-agent-token', variable: 'VAULT_TOKEN')
+                        file(credentialsId: 'vault-agent-token', variable: 'VAULT_TOKEN_FILE')
                     ]) {
                         sh """                            
                             set -e  # Exit immediately on error
                             
                             # Set ALL Vault variables explicitly
                             export VAULT_ADDR="https://172.26.44.182:8200"
-                            export VAULT_TOKEN="${VAULT_TOKEN}"
+                            export VAULT_TOKEN=\$(cat \$VAULT_TOKEN_FILE)
                             export TRANSIT_SECRET_ENGINE_PATH="transit"
                             
                             # Debug output
                             echo "[Debug] VAULT_ADDR=\$VAULT_ADDR"
                             echo "[Debug] TRANSIT_PATH=\$TRANSIT_SECRET_ENGINE_PATH"
-                            echo "[Debug] Token length: \${#VAULT_TOKEN}"
+                            echo "[Debug] Token loaded from file: \${VAULT_TOKEN:+YES}"
                             
                             echo "[Cosign] Version Check"
                             cosign version
