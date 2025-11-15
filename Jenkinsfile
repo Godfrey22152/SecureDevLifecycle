@@ -216,12 +216,14 @@ pipeline {
                         vaultSecrets: [],
                         configuration: [vaultCredentialId: 'vault-agent-token', vaultUrl: 'https://vault.com:8200']
                     ]) {
+                        // Capture the VAULT_TOKEN from the withVault context
+                        def vaultToken = env.VAULT_TOKEN
                         sh '''                            
                             set -e  # Exit immediately on error
                             
                             # Export Vault environment variables from Vault Agent
                             export VAULT_ADDR="https://vault.com:8200"
-                            export VAULT_TOKEN="$VAULT_TOKEN"
+                            export VAULT_TOKEN="${vaultToken}"
                             
                             echo "[Cosign] Version Check"
                             cosign version
@@ -251,12 +253,13 @@ pipeline {
                         vaultSecrets: [],
                         configuration: [vaultCredentialId: 'vault-agent-token', vaultUrl: 'https://vault.com:8200']
                     ]) {
+                        def vaultToken = env.VAULT_TOKEN
                         sh '''
                             set -e  # Exit immediately on error
                             
                             # Export Vault environment variables from Vault Agent
                             export VAULT_ADDR="https://vault.com:8200"
-                            export VAULT_TOKEN="$VAULT_TOKEN"
+                            export VAULT_TOKEN="${vaultToken}"
                                                     
                             echo "[Cosign] Version Check"
                             cosign version
