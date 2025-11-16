@@ -213,37 +213,40 @@ pipeline {
         stage('Sign Container Image with Cosign') {
             steps {
                 script {
-                    def tokenContent = readFile('/var/lib/jenkins/vault/token').trim()
-                    sh """                            
-                        set -e  # Exit immediately on error
-                        
-                        # Set ALL Vault variables explicitly
-                        export VAULT_ADDR="https://172.26.44.182:8200"
-                        export VAULT_TOKEN="${tokenContent}"
-                        export TRANSIT_SECRET_ENGINE_PATH="transit"
-                        export VAULT_SKIP_VERIFY="true"  # Skip TLS verification
-                        
-                        # Debug output
-                        echo "[Debug] VAULT_ADDR=\$VAULT_ADDR"
-                        echo "[Debug] TRANSIT_PATH=\$TRANSIT_SECRET_ENGINE_PATH"
-                        echo "[Debug] Token is set: \${VAULT_TOKEN:+YES}"
-                        
-                        echo "[Cosign] Version Check"
-                        cosign version
-    
-                        echo "[Cosign] Signing ${IMAGE_NAME}:${TAG}"
-                        
-                        # Sign image with digest instead of image tag 
-                        DIGEST=\$(crane digest "${IMAGE_NAME}:${TAG}")
-    
-                        cosign sign \
-                            --key "hashivault://cosign" \
-                            --yes \
-                            --recursive \
-                            "${IMAGE_NAME}@\${DIGEST}"
-    
-                        echo "✅ Signed Image with Digest: ${IMAGE_NAME}@\${DIGEST}"
-                    """
+                    withCredentials([
+                        string(credentialsId: 'vault-cosign-token', variable: 'VAULT_TOKEN')
+                    ]) {
+                        sh """                            
+                            set -e  # Exit immediately on error
+                            
+                            # Set ALL Vault variables explicitly
+                            export VAULT_ADDR="https://172.26.44.182:8200"
+                            export VAULT_TOKEN="${VAULT_TOKEN}"
+                            export TRANSIT_SECRET_ENGINE_PATH="transit"
+                            export VAULT_SKIP_VERIFY="true"  # Skip TLS verification
+                            
+                            # Debug output
+                            echo "[Debug] VAULT_ADDR=\$VAULT_ADDR"
+                            echo "[Debug] TRANSIT_PATH=\$TRANSIT_SECRET_ENGINE_PATH"
+                            echo "[Debug] Token is set: \${VAULT_TOKEN:+YES}"
+                            
+                            echo "[Cosign] Version Check"
+                            cosign version
+        
+                            echo "[Cosign] Signing ${IMAGE_NAME}:${TAG}"
+                            
+                            # Sign image with digest instead of image tag 
+                            DIGEST=\$(crane digest "${IMAGE_NAME}:${TAG}")
+        
+                            cosign sign \
+                                --key "hashivault://cosign" \
+                                --yes \
+                                --recursive \
+                                "${IMAGE_NAME}@\${DIGEST}"
+        
+                            echo "✅ Signed Image with Digest: ${IMAGE_NAME}@\${DIGEST}"
+                        """
+                    }
                 }
             }
         }
@@ -252,7 +255,7 @@ pipeline {
             steps {
                 script {
                     withCredentials([
-                        string(credentialsId: 'vault-agent-token', variable: 'VAULT_TOKEN')
+                        string(credentialsId: 'vault-cosign-token', variable: 'VAULT_TOKEN')
                     ]) {
                         sh """
                             set -e  # Exit immediately on error
