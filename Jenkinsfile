@@ -213,12 +213,13 @@ pipeline {
         stage('Sign Container Image with Cosign') {
             steps {
                 script {
+                    def tokenContent = readFile('/var/lib/jenkins/vault/token').trim()
                     sh """                            
                         set -e  # Exit immediately on error
                         
                         # Set ALL Vault variables explicitly
                         export VAULT_ADDR="https://172.26.44.182:8200"
-                        export VAULT_TOKEN="hvs.CAESIMnTGm8aVqxKWVjNO227X5dsFKsz1ZOYVnO2ncblQmAcGh4KHGh2cy5PN2pYRnNKQ1B4RHNsR0plMjVoTVM2Q0c"
+                        export VAULT_TOKEN="${tokenContent}"
                         export TRANSIT_SECRET_ENGINE_PATH="transit"
                         export VAULT_SKIP_VERIFY="true"  # Skip TLS verification
                         
