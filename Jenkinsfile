@@ -176,7 +176,7 @@ pipeline {
                         archiveArtifacts artifacts: 'trivy-reports/**', allowEmptyArchive: false
                     }
                 }
-                /*
+                
                 stage('Grype Security Scan') {
                     steps {
                         script {
@@ -199,7 +199,6 @@ pipeline {
                         archiveArtifacts artifacts: 'grype-reports/**', allowEmptyArchive: false
                     }
                 }
-                */
             }
         }
         
@@ -219,16 +218,11 @@ pipeline {
                         sh """                            
                             set -e  # Exit immediately on error
                             
-                            # Set ALL Vault variables explicitly
-                            export VAULT_ADDR="https://172.26.44.182:8200"
+                            # Vault variables 
+                            export VAULT_ADDR="https://vault.com:8200"
                             export VAULT_TOKEN="${VAULT_TOKEN}"
                             export TRANSIT_SECRET_ENGINE_PATH="transit"
                             export VAULT_SKIP_VERIFY="true"  # Skip TLS verification
-                            
-                            # Debug output
-                            echo "[Debug] VAULT_ADDR=\$VAULT_ADDR"
-                            echo "[Debug] TRANSIT_PATH=\$TRANSIT_SECRET_ENGINE_PATH"
-                            echo "[Debug] Token is set: \${VAULT_TOKEN:+YES}"
                             
                             echo "[Cosign] Version Check"
                             cosign version
