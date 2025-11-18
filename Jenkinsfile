@@ -213,13 +213,14 @@ pipeline {
             steps {
                 script {
                     withCredentials([
-                        string(credentialsId: 'vault-cosign-token', variable: 'VAULT_TOKEN')
+                        string(credentialsId: 'vault-cosign-token', variable: 'VAULT_TOKEN'),
+                        string(credentialsId: 'vault-address', variable: 'VAULT_ADDR')
                     ]) {
                         sh """                            
                             set -e  # Exit immediately on error
                             
                             # Vault variables 
-                            export VAULT_ADDR="https://vault.com:8200"
+                            export VAULT_ADDR="${VAULT_ADDR}"
                             export VAULT_TOKEN="${VAULT_TOKEN}"
                             export TRANSIT_SECRET_ENGINE_PATH="transit"
                             export VAULT_SKIP_VERIFY="true"  # Skip TLS verification
@@ -249,13 +250,14 @@ pipeline {
             steps {
                 script {
                     withCredentials([
-                        string(credentialsId: 'vault-cosign-token', variable: 'VAULT_TOKEN')
+                        string(credentialsId: 'vault-cosign-token', variable: 'VAULT_TOKEN'),
+                        string(credentialsId: 'vault-address', variable: 'VAULT_ADDR')
                     ]) {
                         sh """
                             set -e  # Exit immediately on error
                             
                             # Export Vault environment variables from Vault Agent
-                            export VAULT_ADDR="https://vault.com:8200"
+                            export VAULT_ADDR="${VAULT_ADDR}"
                             export VAULT_TOKEN="${VAULT_TOKEN}"
                             export VAULT_SKIP_VERIFY="true"  # Skip TLS verification
                                                     
