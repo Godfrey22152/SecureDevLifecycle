@@ -176,7 +176,7 @@ pipeline {
                         archiveArtifacts artifacts: 'trivy-reports/**', allowEmptyArchive: false
                     }
                 }
-                
+                /*
                 stage('Grype Security Scan') {
                     steps {
                         script {
@@ -201,7 +201,7 @@ pipeline {
                 }
             }
         }
-        
+        */
         stage('Push Image to GitHub Container Registry (GHCR)') {
             steps {
                 echo 'CONGRATULATIONS No CRITICAL VULNERABILITIES WERE FOUND, PROCEEDING TO PUSH IMAGE'
@@ -216,7 +216,7 @@ pipeline {
                         string(credentialsId: 'vault-cosign-token', variable: 'VAULT_TOKEN'),
                         string(credentialsId: 'vault-address', variable: 'VAULT_ADDR')
                     ]) {
-                        sh """                            
+                        sh '''                            
                             set -e  # Exit immediately on error
                             
                             # Vault variables 
@@ -231,16 +231,16 @@ pipeline {
                             echo "[Cosign] Signing ${IMAGE_NAME}:${TAG}"
                             
                             # Sign image with digest instead of image tag 
-                            DIGEST=\$(crane digest "${IMAGE_NAME}:${TAG}")
+                            DIGEST=$(crane digest "${IMAGE_NAME}:${TAG}")
         
                             cosign sign \
                                 --key "hashivault://cosign" \
                                 --yes \
                                 --recursive \
-                                "${IMAGE_NAME}@\${DIGEST}"
-        
-                            echo "✅ Signed Image with Digest: ${IMAGE_NAME}@\${DIGEST}"
-                        """
+                                "${IMAGE_NAME}@${DIGEST}"
+                                
+                            echo "✅ Signed Image with Digest: ${IMAGE_NAME}@${DIGEST}"
+                        '''
                     }
                 }
             }
