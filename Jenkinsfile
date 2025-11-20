@@ -199,9 +199,10 @@ pipeline {
                         archiveArtifacts artifacts: 'grype-reports/**', allowEmptyArchive: false
                     }
                 }
+                */
             }
         }
-        */
+        
         stage('Push Image to GitHub Container Registry (GHCR)') {
             steps {
                 echo 'CONGRATULATIONS No CRITICAL VULNERABILITIES WERE FOUND, PROCEEDING TO PUSH IMAGE'
