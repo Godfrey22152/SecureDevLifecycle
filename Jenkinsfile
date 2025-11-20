@@ -238,6 +238,9 @@ pipeline {
                                 --key "hashivault://cosign" \
                                 --yes \
                                 --recursive \
+                                -a "build-id=${BUILD_ID}" \
+                                -a "git-commit=${GIT_COMMIT}" \
+                                -a "built-by=Godfrey-in-jenkins" \
                                 "${IMAGE_NAME}@${DIGEST}"
                                 
                             echo "✅ Signed Image with Digest: ${IMAGE_NAME}@${DIGEST}"
