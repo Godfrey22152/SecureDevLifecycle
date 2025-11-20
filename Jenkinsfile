@@ -237,6 +237,7 @@ pipeline {
                             cosign sign \
                                 --key "hashivault://cosign" \
                                 --yes \
+                                --recursive \
                                 -a "build-id=${BUILD_ID}" \
                                 -a "git-commit=${GIT_COMMIT}" \
                                 -a "built-by=Godfrey-in-jenkins" \
@@ -274,7 +275,7 @@ pipeline {
                             echo "[Cosign] Verifying $IMAGE_REF"
                             cosign verify \
                                 --key "hashivault://cosign" \
-                                "${IMAGE_REF}" | jq '.'
+                                "${IMAGE_REF}" 
         
                             echo "✅ Verification succeeded: $IMAGE_REF"
                         '''
