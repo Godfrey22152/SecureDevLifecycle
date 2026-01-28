@@ -21,11 +21,11 @@ Before proceeding, ensure you have the following:
 
 ---
 
-## 2. Install and Initialize Vault on Production Server
+## 2. Install and Initialize Vault Server in a Production-like manner 
 
 Install Vault on your Ubuntu-based production server and configure it for secure operation. This includes adding the HashiCorp repository, installing the package, generating TLS certificates, configuring the server, and initializing Vault.
 
-### A. Install Vault
+### A. Install Vault Server in Prod Mode
 
 Visit the **[Vault official installation link](https://developer.hashicorp.com/vault/install#linux)**
 Run the following commands to add the HashiCorp repository and install Vault:
@@ -293,7 +293,7 @@ Secure these files (`role_id.txt` and `secret_id.txt`) and transfer them to the 
 
 ---
 
-## 5. Jenkins Host Setup
+## 5. Vault Agent Setup on the Jenkins Server
 
 On the Jenkins host, install the Vault binary (which includes the agent) and set up secure storage for credentials.
 
