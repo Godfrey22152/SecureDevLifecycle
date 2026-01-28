@@ -224,7 +224,7 @@ pipeline {
                             export VAULT_ADDR="${VAULT_ADDR}"
                             export VAULT_TOKEN="${VAULT_TOKEN}"
                             export TRANSIT_SECRET_ENGINE_PATH="transit"
-                            export VAULT_SKIP_VERIFY="true"  # Skip TLS verification
+                            export VAULT_SKIP_VERIFY="true"  # Skip TLS verification, NB: In production use proper TLS
                             
                             echo "[Cosign] Version Check"
                             cosign version
@@ -263,7 +263,7 @@ pipeline {
                             # Export Vault environment variables from Vault Agent
                             export VAULT_ADDR="${VAULT_ADDR}"
                             export VAULT_TOKEN="${VAULT_TOKEN}"
-                            export VAULT_SKIP_VERIFY="true"  # Skip TLS verification
+                            export VAULT_SKIP_VERIFY="true"  # Skip TLS verification, NB: In production use proper TLS
                                                     
                             echo "[Cosign] Version Check"
                             cosign version
@@ -284,7 +284,7 @@ pipeline {
             }
         }
 
-        stage('Update Docker Image and Tag in the Deployment manifest file in Container-Security branch') {
+        stage('Update Docker Image and Tag in the Deployment manifest file in deployment branch') {
             steps {
                 script {
                     withCredentials([gitUsernamePassword(credentialsId: 'git-cred', gitToolName: 'Default')]) {
