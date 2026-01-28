@@ -359,7 +359,7 @@ auto_auth {
 
 template {
   source      = "/var/lib/vault-agent/templates/token_env.tpl"
-  destination = "/var/lib/jenkins/vault/vault_env"
+  destination = "/var/lib/jenkins/vault/token"
   perms       = "0640"
   command     = "systemctl try-restart jenkins.service"
 }
@@ -467,3 +467,198 @@ The Vault Agent will automatically renew tokens and re-render the environment fi
 - For advanced setups, enable Vault HA, audit logging, and integrate with Kubernetes for dynamic secrets.
 
 If you encounter issues, check Vault logs (`journalctl -u vault`) and refer to official documentation.
+
+---
+
+## Linking Jenkins Controller with Vault using Vault Agent and HashiCorp Vault Plugin
+
+This continuation guide builds on the previous sections, focusing on populating Vault with secrets, installing and configuring the HashiCorp Vault Plugin in Jenkins, using the Vault Agent-provided token for authentication, and accessing secrets (including Git credentials) in Jenkins jobs. It assumes the Vault Agent is running on the Jenkins controller as configured earlier, with automatic token renewal and rendering.
+
+**Important Note on Token File Path:**  
+The previous setup sinks the Vault token to `/var/lib/vault-agent/.vault-token` and renders an environment file at `/var/lib/jenkins/vault/token` containing the auto-renewed Vault token and will be used by the Jenkins plugin. 
+
+---
+
+## 9. Populating Vault with Secrets for Jenkins
+
+Before linking Jenkins, store the required secrets in Vault's KV secrets engine (version 2, mounted at `secret/`). Use an admin token or policy with write access.
+
+### A. Enable KV v2 if Not Already Done
+```bash
+vault secrets enable -path=secret kv-v2
+```
+Vault creates a mount point called **`secret`**.
+Inside it, every secret you store lives under:
+```bash
+secret/data/<your_secret_path>
+```
+
+### B. Add Example Secrets
+- **Git Credentials** (e.g., username and personal access token or password):  
+  ```bash
+  vault kv put secret/jenkins/git-cred \
+    username="your-git-username" \
+    password="your-git-pat-or-password"
+  ```
+
+- **Other Common Credentials** (examples):  
+  - Docker Hub credentials:  
+    ```bash
+    vault kv put secret/jenkins/docker-cred \
+      username="your-docker-username" \
+      password="your-docker-pat"
+    ```
+
+  - AWS access keys (if needed):  
+    ```bash
+    vault kv put secret/jenkins/aws-cred \
+      access_key="AKIA..." \
+      secret_key="wJalrXU..."
+    ```
+
+  - Generic secret text (e.g., API key):  
+    ```bash
+    vault kv put secret/jenkins/api-key \
+      value="your-api-key-here"
+    ```
+
+- Verify secrets:  
+  ```bash
+  vault kv get secret/jenkins/git-cred
+  ```
+
+All secrets under `secret/data/jenkins/*` are readable by the `jenkins-policy` created earlier.
+
+---
+
+## 10. Installing the HashiCorp Vault Plugin in Jenkins
+
+1. Log in to Jenkins as an administrator.  
+2. Go to **Manage Jenkins > Plugins > Plugin Manager**.  
+3. Switch to the **Available** tab and search for "HashiCorp Vault".  
+4. Select **HashiCorp Vault** and click **Install without restart** (or restart if prompted).  
+
+The plugin supports:  
+- Authentication via Token File (ideal for Vault Agent).  
+- Secret injection into pipelines/freestyle jobs via `withVault` or build wrappers.
+
+---
+
+## 11. Configuring Vault Authentication in Jenkins Using the Vault Agent Token
+
+### A. Add Vault Token File Credential
+1. Go to **Manage Jenkins > Credentials > System > Global credentials (unrestricted) > Add Credentials**.  
+2. Set **Kind** to **Vault Token File Credential**.  
+3. Fill in:  
+   - **Scope**: Global  
+   - **ID**: `vault-agent-token` (or your preferred ID)  
+   - **Description**: Vault Agent Auto-Rotated Token  
+   - **Token File Path**: `/var/lib/jenkins/vault/token`  
+4. Click **OK**.
+
+This credential reads the live token from the file managed by Vault Agent.
+
+### B. Configure Global Vault Settings
+1. Go to **Manage Jenkins > Configure System**.  
+2. Scroll to the **HashiCorp Vault** section.  
+3. Add a new configuration:  
+   - **Vault URL**: `https://<vault-hostname>:8200` (from earlier setup).  
+   - **Vault Credential**: Select `vault-agent-token` from the dropdown.  
+   - **KV Engine Version**: 2 (default).  
+   - **Skip SSL Verification**: Enable if using self-signed certs (not recommended for production).  
+4. Save the configuration.
+
+Jenkins now authenticates to Vault using the auto-rotated token from the Vault Agent.
+
+---
+
+## 12. Using Vault Secrets in Jenkins Jobs
+
+The plugin primarily injects secrets as environment variables during job execution (masked in logs). It does not provide a dynamic Credentials Provider for standard Jenkins credential types (e.g., Username with Password stored in Vault). Instead, use pipeline steps or freestyle wrappers to fetch and consume secrets.
+
+### A. In Declarative or Scripted Pipelines (Recommended)
+Use the `withVault` step to fetch secrets and expose them as env vars.
+
+Example Jenkinsfile snippet for Git credentials:
+```groovy
+pipeline {
+    agent any
+    stages {
+        stage('Checkout') {
+            steps {
+                withVault(
+                    configuration: [
+                        vaultUrl: 'https://<vault-hostname>:8200',  // optional if global configured
+                        vaultCredentialId: 'vault-agent-token'
+                    ],
+                    vaultSecrets: [
+                        [
+                            path: 'secret/jenkins/git-cred',
+                            secretValues: [
+                                [vaultKey: 'username', envVar: 'GIT_USERNAME'],
+                                [vaultKey: 'password', envVar: 'GIT_PASSWORD']
+                            ]
+                        ]
+                    ]
+                ) {
+                    sh '''
+                        git clone https://${GIT_USERNAME}:${GIT_PASSWORD}@github.com/your-org/your-repo.git
+                        # Or use in other commands
+                      '''
+                }
+            }
+        }
+    }
+}
+```
+
+- Secrets are available only inside the `withVault` block.  
+- For multiple secrets, add more entries to `vaultSecrets`.  
+- Use global config to omit `configuration` block if preferred.
+
+### B. In Freestyle Jobs
+1. Configure the job and add **Build Wrappers** > **Vault Build Wrapper**.  
+2. Specify secrets similarly (path, keys, env vars).  
+3. In build steps (e.g., Execute shell), reference the env vars:  
+   ```bash
+   echo "Git username: $GIT_USERNAME"
+   git clone https://$GIT_USERNAME:$GIT_PASSWORD@github.com/your-org/your-repo.git
+   ```
+
+### C. Handling Other Credentials
+- **SSH Private Key**: Store key as `private_key` in Vault → fetch → write to temp file → use `ssh-agent`.  
+  Example in pipeline:
+  ```groovy
+  withVault(...) {
+      sh '''
+          echo "$SSH_KEY" > id_rsa
+          chmod 600 id_rsa
+          ssh-agent bash -c 'ssh-add id_rsa; git clone git@github.com:repo.git'
+      '''
+  }
+  ```
+- **Secret Text/API Key**: Fetch as env var and use in commands (e.g., `curl -H "Authorization: Bearer $API_KEY" ...`).
+
+Test thoroughly—secrets are masked in console output.
+
+---
+
+## 13. Best Practices and Troubleshooting
+- Use short token TTLs and monitor renewal in Vault Agent logs (`journalctl -u vault-agent`).  
+- Restrict policies to least privilege.  
+- For production: Enable Vault namespaces, audit logging, and HA.  
+- Issues? Check Jenkins logs, Vault Agent logs, and Vault status.
+
+---
+
+## References
+- HashiCorp Vault Documentation: https://developer.hashicorp.com/vault/docs  
+- HashiCorp Vault Plugin for Jenkins: https://plugins.jenkins.io/hashicorp-vault-plugin  
+- Pipeline Steps Reference: https://www.jenkins.io/doc/pipeline/steps/hashicorp-vault-plugin  
+- Vault Agent Guide: https://developer.hashicorp.com/vault/docs/agent-and-proxy/agent  
+- Production Hardening: https://developer.hashicorp.com/vault/tutorials/production-hardening  
+- Jenkins Credentials Guide: https://www.jenkins.io/doc/book/using/using-credentials/  
+
+This completes the integration, enabling secure, dynamic secret access from Vault in Jenkins while leveraging the Vault Agent for token management.
+
+
