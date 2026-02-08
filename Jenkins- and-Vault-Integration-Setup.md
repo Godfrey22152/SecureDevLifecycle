@@ -649,6 +649,8 @@ pipeline {
 - The credential gets injected automatically during the **`git checkout`** step.
 - Global Jenkins credentials configuration removes the need for inline secret definitions.
 
+---
+
 ### B. Using the Transit Engine for Container Signing with Cosign
 The Transit engine allows Jenkins jobs to perform cryptographic operations like signing container images without exposing private keys. This is particularly useful for secure container builds on agents, ensuring verifiable images in your CI/CD pipeline. Cosign (from Sigstore) can use Vault's Transit backend as a key management system (KMS) via the `hashivault://` URI scheme.
 
@@ -677,9 +679,7 @@ The Transit engine allows Jenkins jobs to perform cryptographic operations like 
 - Vault address and a short-lived token are provided via Jenkins credentials (as shown below). Your setup uses separate credentials for `VAULT_ADDR` and `VAULT_TOKEN`.
 - For production, replace **`VAULT_SKIP_VERIFY="true"`** with proper CA certificate configuration (e.g., mount `/opt/vault/tls/tls.crt` and set **`VAULT_CACERT`**).
 
-Note: The examples below sign using the image digest (via crane digest) for immutability, add useful annotations (build metadata), and support recursive signing (e.g., multi-arch images).Example Jenkinsfile integration (extend your existing pipeline after a build/push stage):
-
-**Note:** The examples below sign using the image **digest** (via `crane digest`) for immutability, add useful annotations (build metadata), and support recursive signing (e.g., multi-arch images).
+**--> Note:** The examples below sign using the image **digest** (via `crane digest`) for immutability, add useful annotations (build metadata), and support recursive signing (e.g., multi-arch images).
 
 Example Jenkinsfile integration, see the complete **-->** **[Jenkinsfile](https://github.com/Godfrey22152/SecureDevLifecycle/blob/container-security/Jenkinsfile)**:
 
