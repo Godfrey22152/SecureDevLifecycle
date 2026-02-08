@@ -649,7 +649,160 @@ pipeline {
 - The credential gets injected automatically during the **`git checkout`** step.
 - Global Jenkins credentials configuration removes the need for inline secret definitions.
 
-### 
+### B. Using the Transit Engine for Container Signing with Cosign
+The Transit engine allows Jenkins jobs to perform cryptographic operations like signing container images without exposing private keys. This is particularly useful for secure container builds on agents, ensuring verifiable images in your CI/CD pipeline. Cosign (from Sigstore) can use Vault's Transit backend as a key management system (KMS) via the `hashivault://` URI scheme.
+
+#### Prerequisites for This Section
+
+- Cosign and [crane](https://github.com/google/go-containerregistry/blob/main/cmd/crane/README.md) (Google's go-containerregistry tool) installed on your Jenkins agents (e.g., via a tool installer, Dockerfile for agents, or pre-installed). Install via go install `github.com/sigstore/cosign/cmd/cosign@latest` or package managers.
+
+  - Sample Installation:
+
+    ```
+    # COSIGN
+    curl -O -L "https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64"
+    sudo mv cosign-linux-amd64 /usr/local/bin/cosign
+    sudo chmod +x /usr/local/bin/cosign
+
+    # CRANE
+    CRANE_VERSION=$(curl -s https://api.github.com/repos/google/go-containerregistry/releases/latest | grep tag_name | cut -d '"' -f 4)
+    curl -L -o crane.tar.gz "https://github.com/google/go-containerregistry/releases/download/${CRANE_VERSION}/go-containerregistry_Linux_x86_64.tar.gz"
+    tar -xvf crane.tar.gz crane
+    sudo mv crane /usr/local/bin/
+    crane version
+
+    ```
+- A container image built/pushed earlier in the pipeline (with variables like `${IMAGE_NAME}` and `${TAG}` defined).
+- The **`jenkins-policy`** from Section 4.C grants required Transit permissions (`transit/sign/cosign`, `transit/verify/cosign`, `transit/export/signing-key/cosign`, etc.).
+- Vault address and a short-lived token are provided via Jenkins credentials (as shown below). Your setup uses separate credentials for `VAULT_ADDR` and `VAULT_TOKEN`.
+- For production, replace **`VAULT_SKIP_VERIFY="true"`** with proper CA certificate configuration (e.g., mount `/opt/vault/tls/tls.crt` and set **`VAULT_CACERT`**).
+
+Note: The examples below sign using the image digest (via crane digest) for immutability, add useful annotations (build metadata), and support recursive signing (e.g., multi-arch images).Example Jenkinsfile integration (extend your existing pipeline after a build/push stage):
+
+**Note:** The examples below sign using the image **digest** (via `crane digest`) for immutability, add useful annotations (build metadata), and support recursive signing (e.g., multi-arch images).
+
+Example Jenkinsfile integration, see the complete **-->** **[Jenkinsfile](https://github.com/Godfrey22152/SecureDevLifecycle/blob/container-security/Jenkinsfile)**:
+
+```groovy
+pipeline {
+    agent {label 'slave-1'}  // Agent with Docker, Cosign, and crane installed
+         
+    parameters {
+        string(name: 'RELEASE_TYPE', description: 'Release type (e.g., prod, staging, dev)', defaultValue: 'dev')
+    }
+    environment {
+        IMAGE_NAME = 'ghcr.io/godfrey22152/trainbook-app'
+        TRIVY_TIMEOUT = '15m'
+        GITHUB_CREDENTIALS_ID = 'git-cred'
+    }
+
+    stages {
+        // ... Previous stages: Build, Push, etc. ...
+
+        stage('Sign Container Image with Cosign') {
+            steps {
+                script {
+                    withCredentials([
+                        string(credentialsId: 'vault-cosign-token', variable: 'VAULT_TOKEN'),
+                        string(credentialsId: 'vault-address', variable: 'VAULT_ADDR')
+                    ]) {
+                        sh '''                            
+                            set -e  # Exit immediately on error
+                            
+                            # Vault variables 
+                            export VAULT_ADDR="${VAULT_ADDR}"
+                            export VAULT_TOKEN="${VAULT_TOKEN}"
+                            export TRANSIT_SECRET_ENGINE_PATH="transit"
+                            export VAULT_SKIP_VERIFY="true"  # Skip TLS verification, NB: In production use proper TLS
+                            
+                            echo "[Cosign] Version Check"
+                            cosign version
+        
+                            echo "[Cosign] Signing ${IMAGE_NAME}:${TAG}"
+                            
+                            # Sign image with digest instead of image tag 
+                            DIGEST=$(crane digest "${IMAGE_NAME}:${TAG}")
+        
+                            cosign sign \
+                                --key "hashivault://cosign" \
+                                --yes \
+                                --recursive \
+                                -a "build-id=${BUILD_ID}" \
+                                -a "git-commit=${GIT_COMMIT}" \
+                                -a "built-by=Godfrey-in-jenkins" \
+                                "${IMAGE_NAME}@${DIGEST}"
+                                
+                            echo "✅ Signed Image with Digest: ${IMAGE_NAME}@${DIGEST}"
+                        '''
+                    }
+                }
+            }
+        }
+
+        stage('Verify Cosign Signature') {
+            steps {
+                script {
+                    withCredentials([
+                        string(credentialsId: 'vault-cosign-token', variable: 'VAULT_TOKEN'),
+                        string(credentialsId: 'vault-address', variable: 'VAULT_ADDR')
+                    ]) {
+                        sh '''
+                            set -e  # Exit immediately on error
+                            
+                            # Export Vault environment variables from Vault Agent
+                            export VAULT_ADDR="${VAULT_ADDR}"
+                            export VAULT_TOKEN="${VAULT_TOKEN}"
+                            export VAULT_SKIP_VERIFY="true"  # Skip TLS verification, NB: In production use proper TLS
+                                                    
+                            echo "[Cosign] Version Check"
+                            cosign version
+                            
+                            echo "[Cosign] Resolving digest for ${IMAGE_NAME}:${TAG} using crane..."
+                            DIGEST=$(crane digest "${IMAGE_NAME}:${TAG}")
+                            IMAGE_REF="${IMAGE_NAME}@${DIGEST}"
+                            
+                            echo "[Cosign] Verifying $IMAGE_REF"
+                            cosign verify \
+                                --key "hashivault://cosign" \
+                                "${IMAGE_REF}" 
+        
+                            echo "✅ Verification succeeded: $IMAGE_REF"
+                        '''
+                    }
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            // Optional: Clean up any temporary files or unset sensitive env vars
+            sh 'unset VAULT_TOKEN VAULT_ADDR || true'
+        }
+    }
+}
+```
+
+- **Explanation**:
+  
+  - **Cosign Sign**: Uses the Transit key directly; Vault handles the signing remotely without sending the private key to the agent.
+  - **Verification**: Exports the public key (allowed by policy) for local verification.
+  - **withCredentials**: Securely injects `VAULT_TOKEN` and `VAULT_ADDR` as environment variables only for the signing/verification steps. This matches your project's credential setup (`vault-cosign-token` and `vault-address`).
+  - **Digest-based Signing/Verification**: Uses `crane digest` to get the immutable SHA256 digest, avoiding issues with mutable tags.
+  - **Annotations**: Adds pipeline metadata (`build-id`, `git-commit`, etc.) to the signature for traceability.
+  - **--recursive**: Handles multi-architecture or manifest-list images.
+  - **--yes**: Skips interactive confirmation (useful in CI).
+  - **TRANSIT_SECRET_ENGINE_PATH**: Explicitly set to `"transit"` (default mount path in your setup); adjust if mounted elsewhere.
+  - **VAULT_SKIP_VERIFY**: Convenient for self-signed certs during testing, but **strongly** recommend proper TLS in production (set `VAULT_CACERT` to the CA cert path).
+
+- **Security Notes**: The token is short-lived and scoped by policy. Mask `VAULT_TOKEN` in Jenkins console logs if needed (via global settings or `withCredentials` behavior). For agents in Kubernetes, consider per-agent Vault Agents to avoid token propagation.
+- **Testing**: Trigger the pipeline and monitor console output for Cosign success messages. Check Vault audit logs (`journalctl -u vault` or Vault UI) for `transit/sign` and `transit/verify` operations.
+- **Troubleshooting**:
+  - Auth errors → Verify token validity, policy paths, and `VAULT_ADDR`.
+  - Digest resolution fails → Ensure `crane` is installed and image is pushed/accessible.
+  - Signature mismatch on verify → Confirm same key name (`cosign`) and no key rotation occurred mid-pipeline.
+
+This provides a production-ready, digest-secure signing flow that leverages your Vault + Jenkins integration fully.
 
 ---
 
