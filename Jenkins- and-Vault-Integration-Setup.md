@@ -197,6 +197,9 @@ Create a key named `cosign`:
 vault write -f transit/keys/cosign type=ecdsa-p256
 ```
 
+#### Transit Engine 
+![Transit Engine](./images/signing-key.png)
+
 #### 3. List and View Keys
 
 ```bash
@@ -208,6 +211,9 @@ vault read transit/keys/cosign
 ```
 
 You now have the key name: **cosign**.
+
+#### Signing Key
+![Transit Engine](./images/signing-key2.png)
 
 ### C. Create a Jenkins Policy
 
