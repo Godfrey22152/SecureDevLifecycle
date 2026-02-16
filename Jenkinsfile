@@ -7,7 +7,7 @@ pipeline {
         KUBE_CREDENTIALS_ID = 'k8-cred'
         KUBE_NAMESPACE = 'webapps'
         KUBE_CLUSTER_NAME = 'kubernetes'
-        KUBE_SERVER_URL = 'https://192.168.56.10:6443'
+        KUBE_SERVER_URL = 'https://IP-ADDRESS:6443'
     }
 
     stages {
