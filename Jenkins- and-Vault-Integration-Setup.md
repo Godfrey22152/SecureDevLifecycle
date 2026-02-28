@@ -67,12 +67,17 @@ sudo chmod 600 /opt/vault/tls/*
 
 ### C. Configure Vault Server
 
-Edit or create the Vault configuration file at `/etc/vault/vault.hcl` with the following content (adjust as needed for your environment):
+Edit or create the Vault configuration file at `/etc/vault.d/vault.hcl` with the following content (adjust as needed for your environment):
 
 ```hcl
 # Full configuration options: https://www.vaultproject.io/docs/configuration
 
+api_addr = "https://IP_ADDRESS:8200"
+cluster_addr = "https://IP_ADDRESS:8201"
 ui = true
+
+#mlock = true
+disable_mlock = true
 
 storage "file" {
   path = "/opt/vault/data"
